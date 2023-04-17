@@ -1,0 +1,49 @@
+services:
+
+  database:
+    container_name: postgres
+    image: postgres
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - 5432:5432
+    volumes:
+      - data-db:/var/lib/postgresql/data
+    
+  # pgadmin:
+  #   container_name: pgadmin
+  #   image: dpage/pgadmin4:latest
+  #   restart: unless-stopped
+  #   env_file: .env
+  #   ports:
+  #     - 5050:80
+  #   # access at 127.0.0.1:5050
+
+  server:
+    container_name: server
+    build:
+      context: ./server
+    image: server
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./server/src:/app/src
+    ports:
+      - 3000:3000
+    # access at 127.0.0.1:3000
+  
+  client:
+    container_name: client
+    build:
+      context: ./client
+    image: client
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./client/src:/app/src
+    ports:
+      - 5173:5173
+     # access at 127.0.0.1:5173
+
+volumes:
+  data-db: {}

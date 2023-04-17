@@ -1,0 +1,11 @@
+{
+	"username": "sousou",
+	 "password": 123,
+   "avatar": "string",
+   "level": 0,
+   "status": true,
+    "win": 0,
+    "lose": 0,
+    "two_fa": false,
+    "friends": ["Rongho", "Capy", "Tegrity"]
+}
