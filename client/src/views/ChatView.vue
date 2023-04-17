@@ -12,7 +12,5 @@ export default defineComponent({
 </script>
 
 <template>
-  <ChatLists />
-  <!-- <ChatBox /> -->
-  <!-- <div>Chat</div> -->
+  <ChatBox />
 </template>

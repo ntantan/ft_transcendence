@@ -1,86 +1,112 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { io } from "socket.io-client";
+import axios from 'axios';
 
-export default defineComponent({
-    
-	data() {
-		return {
+const CHANNELS_URL = "http://localhost:3000/channels";
+
+export default defineComponent ({
+    data() {
+        return {
             socket: {},
-			messages: [],
-			texteGeneral: "",
-			roomName: "",
-		};
-	},
+            selectedChannel: "",
+            channels: [],
+            roomName: "",
+            passWord: "",
+        }
+    },
 
-	created() {
-		this.socket = io("http://localhost:3000/chat", { withCredentials: true });
-	},
+    created() {
+        this.socket = io("http://localhost:3000/chat");
+    },
 
-	methods: {
+    mounted() {
+        this.fetchAllRooms();
+        this.socket.on('newRoom', () => {
+            this.fetchAllRooms();
+        })
+    },
 
-		handleSubmitNewMessage(message) {
-			if (this.texteGeneral) {
-			console.log(this.texteGeneral)
-			this.socket.emit('message', this.texteGeneral)
-			}
-		},
-		clearSearch() {
-			this.texteGeneral = ''
-			this.roomName = ''
-		},
-		clickButton() {
-			if (this.texteGeneral) {
-				console.log("Button clicked");
-			}
-		},
-		createNewRoom() {
-			if (this.roomName) {
-				this.socket.emit('createRoom', 
-					{
-						room_name: this.roomName
-						
-					})
-			}
-		},
-		scrollToBottom() {
-			this.$ref.chatTextarea.scrollTop = this.$ref.chatTextarea.scrollHeight;
-		},
-	},
+    methods: {
+        fetchAllRooms() {
+            axios.get(CHANNELS_URL)
+            .then((response) => {
+                this.channels = response.data;
+            })
+        },
 
-	mounted() {
-		this.socket.on('message', (message) => {
-			this.messages.push(message);
-		})
-	},
+        createNewRoom() {
+            this.socket.emit('createRoom', {room_name: this.roomName, password: this.passWord})
+        }
+    },
 });
-
 </script>
 
 <template>
-	<div class="general-chat">
-		<ul style="liste-style-type: none;" v-for="item in this.messages">
-			<li><v-card text="">{{ item }}</v-card></li>
-		</ul>
-	</div>
-	<div class="input-field">
-		<input @keydown.enter="handleSubmitNewMessage(message), clearSearch()" id="input" type="text" v-model="texteGeneral" />
-		<button @click="handleSubmitNewMessage(message), clearSearch()">Send message</button>
-		<input @keydown.enter=" createNewRoom(), clearSearch()" id="input" type="text" v-model="roomName" />
-		<button @click=" createNewRoom(), clearSearch()">Create new room</button>
-	</div>
+    <v-card width="1200" height="900" class="mx-auto ma-6">
+        <v-row align="start">
+
+            <v-col cols="3">
+                <v-card height="900">
+
+                    <v-row>
+                        <v-col>
+                            <h2 class="d-flex justify-center">Channels</h2>
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col>
+                            <!-- <v-btn-toggle v-model="selectedChannel">
+                                <v-btn v-for="item in channels" :value="item.id">
+                                    <v-row>
+                                        {{ item.name }}
+                                    </v-row>
+                                </v-btn>
+                            </v-btn-toggle> -->
+
+                            
+                            <v-list v-model="selectedChannel">
+                                <v-list-item-group>
+                                    <v-list-item v-for="item in channels" :value="item.id">
+                                        {{ item.name }}
+                                    </v-list-item>
+                                </v-list-item-group>
+                            </v-list>
+                        </v-col>
+                    </v-row>
+                    
+                    <v-row align="end">
+                        <v-col>
+                            <v-text-field v-model="this.roomName" label="Room name"></v-text-field>
+                            <v-text-field v-model="this.passWord" label="Password"></v-text-field>
+                            <v-btn type="submit" @click="this.createNewRoom()">create room</v-btn>
+                        </v-col>
+                    </v-row>
+
+                </v-card>
+            </v-col>
+
+            <v-col class="d-flex align-self-end">
+                <v-text-field >
+                </v-text-field>
+            </v-col>
+
+            <v-col cols="3">
+                <v-card height="900">
+                    <h2 class="d-flex justify-center">User</h2>
+                    <v-list>
+                        <!-- <v-list-item v-for="item in channels"> -->
+                    </v-list>
+                </v-card>
+            </v-col>
+        </v-row>
+    </v-card>
+
+    <div>{{ roomName }}</div>
+    <div>{{ passWord }}</div>
+    <div>{{ selectedChannel }}</div>
 </template>
 
 <style>
-	.input-field {
-		position: fixed;
-		bottom: 10%;
-		background-color: aquamarine;
-	}
-	.general-chat {
-		height: 500px;
-		overflow-y: scroll;
-		overscroll-behavior: auto;
-		scroll-behavior: auto;
-	}
 </style>

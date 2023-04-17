@@ -31,11 +31,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage('createRoom')
     async createRoom(@MessageBody() body: CreateRoomDTO, @ConnectedSocket() client: Socket) 
     {
+		console.log("test");
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
 			return;
 
 		this.channelService.createChannel(body.room_name, body.password, user, "public");
+		this.server.emit('newRoom');
 		console.log("room " + body.room_name + " created");
     }
 	
