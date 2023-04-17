@@ -9,10 +9,20 @@ export default defineComponent ({
     data() {
         return {
             socket: {},
-            selectedChannel: "",
+
             channels: [],
+
+            selectedChannel: "",
             roomName: "",
             passWord: "",
+
+			rules: [
+				value => {
+					if (value)
+						return (true)
+					return ("Field can not be empty")
+				}
+			],
         }
     },
 
@@ -36,77 +46,87 @@ export default defineComponent ({
         },
 
         createNewRoom() {
-            this.socket.emit('createRoom', {room_name: this.roomName, password: this.passWord})
+			if (!this.roomName)
+				return;
+            this.socket.emit('createRoom', {room_name: this.roomName, password: this.passWord});
         }
     },
 });
 </script>
 
 <template>
-    <v-card width="1200" height="900" class="mx-auto ma-6">
-        <v-row align="start">
-
+    <v-card width="1200" class="h-chat mx-auto ma-6">
+        <v-row>
             <v-col cols="3">
-                <v-card height="900">
 
-                    <v-row>
-                        <v-col>
-                            <h2 class="d-flex justify-center">Channels</h2>
-                        </v-col>
-                    </v-row>
+                <v-card class="h-chat">
 
-                    <v-row>
-                        <v-col>
-                            <!-- <v-btn-toggle v-model="selectedChannel">
-                                <v-btn v-for="item in channels" :value="item.id">
-                                    <v-row>
-                                        {{ item.name }}
-                                    </v-row>
-                                </v-btn>
-                            </v-btn-toggle> -->
+					<h2 class="d-flex justify-center align">Channels</h2>
 
-                            
-                            <v-list v-model="selectedChannel">
-                                <v-list-item-group>
-                                    <v-list-item v-for="item in channels" :value="item.id">
-                                        {{ item.name }}
-                                    </v-list-item>
-                                </v-list-item-group>
-                            </v-list>
-                        </v-col>
-                    </v-row>
-                    
-                    <v-row align="end">
-                        <v-col>
-                            <v-text-field v-model="this.roomName" label="Room name"></v-text-field>
-                            <v-text-field v-model="this.passWord" label="Password"></v-text-field>
-                            <v-btn type="submit" @click="this.createNewRoom()">create room</v-btn>
-                        </v-col>
-                    </v-row>
+					<v-card height="700" class="scroll my-3">
+						<v-item-group v-model="selectedChannel">
+							<v-item v-for="channel in channels" :value="channel.id" v-slot="{isSelected, selectedClass, toggle}">
+								<v-card :class="['d-flex pa-3', selectedClass]" @click="toggle">
+									{{channel.name}}
+								</v-card>
+							</v-item>
+						</v-item-group>
+					</v-card>
+
+					<v-form @submit.prevent>
+						<v-text-field v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+						<v-text-field v-model="this.passWord" label="Password"></v-text-field>
+						<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
+					</v-form>
 
                 </v-card>
+
             </v-col>
 
-            <v-col class="d-flex align-self-end">
-                <v-text-field >
-                </v-text-field>
+            <v-col align-self="end">
+				<v-card class="h-options">
+					<v-card-title>{{ selectedChannel }}</v-card-title>
+				</v-card>
+
+				<v-card class="h-message my-2">
+					<v-list>
+						<!-- <v-list-item v-for="item in channels"> -->
+					</v-list>
+				</v-card>
+
+				<v-text-field label="Enter your message here" >						
+				</v-text-field>
             </v-col>
 
             <v-col cols="3">
-                <v-card height="900">
+                <v-card class="h-chat">
                     <h2 class="d-flex justify-center">User</h2>
                     <v-list>
                         <!-- <v-list-item v-for="item in channels"> -->
                     </v-list>
                 </v-card>
             </v-col>
+
         </v-row>
     </v-card>
-
-    <div>{{ roomName }}</div>
-    <div>{{ passWord }}</div>
-    <div>{{ selectedChannel }}</div>
 </template>
 
 <style>
+
+.scroll{
+	overflow-y: scroll;
+}
+
+.h-chat{
+	height: 1000px;
+}
+
+.h-message{ 
+	height: 850px;
+}
+
+.h-options{
+	height: 50px;
+}
+
 </style>

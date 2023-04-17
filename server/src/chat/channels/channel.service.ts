@@ -78,9 +78,7 @@ export class ChannelService
 			date: new Date()
 		});
 		newChannel.messages = [newMessage];
-		this.channelRepository.save(newChannel);
-
-		return;
+		return (this.channelRepository.save(newChannel));
 	}
 
 	async findChannelById(id: string)

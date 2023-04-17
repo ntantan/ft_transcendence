@@ -109,7 +109,8 @@ export class AuthService {
         const id = payload.id;
         let user = await this.usersService.findOne(id).catch((err) => {console.log(err);});
         if (!user) {
-            throw new Error('Invalid token');
+            // throw new Error('Invalid token');
+			return (null)
         }
         return user; 
     }

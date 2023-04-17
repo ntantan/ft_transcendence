@@ -36,7 +36,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			return;
 
-		this.channelService.createChannel(body.room_name, body.password, user, "public");
+		const aw = await this.channelService.createChannel(body.room_name, body.password, user, "public");
 		this.server.emit('newRoom');
 		console.log("room " + body.room_name + " created");
     }
