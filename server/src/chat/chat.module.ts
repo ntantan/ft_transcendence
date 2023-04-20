@@ -7,10 +7,12 @@ import { ChannelController } from './channels/channel.controller';
 import { Channel } from './channels/entities/channel.entity';
 import { Messages } from './channels/entities/messages.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { ChannelUser } from './channels/entities/channelUser.entity';
+import { UsersService } from 'src/users/users.service';
 
 @Module({
-    imports: [AuthModule, TypeOrmModule.forFeature([Channel, Messages])],
-    providers: [ChatGateway, ChatService, ChannelService],
+    imports: [AuthModule, TypeOrmModule.forFeature([Channel, Messages, ChannelUser])],
+    providers: [ChatGateway, ChatService, ChannelService, UsersService],
 	controllers: [ChannelController],
 })
 export class ChatModule {}

@@ -10,8 +10,6 @@ export class Messages {
     @Column()
 	message: string;
 
-	// @Column()
-	// user: string;
 	@JoinTable()
 	@ManyToOne(() => User)
 	user: User;

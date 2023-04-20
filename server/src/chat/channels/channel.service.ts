@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Channel } from "./entities/channel.entity";
 import { ArrayContains, Repository } from "typeorm";
@@ -6,7 +6,8 @@ import { Messages } from "./entities/messages.entity";
 import { WsException } from "@nestjs/websockets";
 import { User } from "src/users/entities/user.entity";
 import { Response } from "express";
-import { ChatModule } from "../chat.module";
+import { ChannelUser } from "./entities/channelUser.entity";
+import { UsersService } from "src/users/users.service";
 
 @Injectable()
 export class ChannelService
@@ -16,6 +17,9 @@ export class ChannelService
         private readonly channelRepository: Repository<Channel>,
 		@InjectRepository(Messages)
 		private readonly messageRepository: Repository<Messages>,
+		@InjectRepository(ChannelUser)
+		private readonly channelUserRepository: Repository<ChannelUser>,
+		private readonly usersService: UsersService,
     ) {}
 
 	// Returns all the created channel in db without messagers
@@ -25,33 +29,36 @@ export class ChannelService
 	}
 
 	// Returns one room with all messages
-	async getChannel(id: string, user: User, res: Response)
+	async getChannel(id: string, user: User)
 	{
 		const channel = await this.channelRepository.findOne({
 			where: [{id: Number(id)}],
-			relations: ['messages', 'users'],
+			relations: ['messages', 'channel_users'],
 		});
+		if (!channel)
+			throw new NotFoundException('Channel not found');
 
-		if (!channel.users.find((users) => users.id == user.id))
-			return (res.status(449).send('User needs to join room first'));
+		try {
+			var channel_user = await this.findChannelUserByUser(channel, user.id);
+		}
+		catch (error) {
+			throw new UnauthorizedException('User has not joined this channel')
+		}
+		if (channel_user.banned)
+			throw new ForbiddenException('User was banned from this channel')
 
-		if (channel.banned.find((banned) => banned == user.id))
-			return (res.status(403).send('User Banned'));
-
-		if (channel)
-			return (res.send(channel));
-		return (res.status(404).send("Channel not found"));
+		return (channel);
 	}
 
 	// Return all channels that are "private" and include user
-	async getPrivateChannels(user: User, res: Response)
+	async getPrivateChannels(user: User)
 	{
-		const channel = await this.channelRepository.find({
-			where: [{type: "private", users: ArrayContains([user.username])}]
-		})
-
-		if (channel)
-			return (res.send(channel));
+		const channels = await this.channelRepository.createQueryBuilder("channel")
+						.leftJoinAndSelect("channel.channel_user", "channel_user")
+						.leftJoinAndSelect("channel_user.user", "user")
+						.where("user = :user", { user: user})
+						.getMany()
+		return (channels);
 	}
 
 	async getDirectChannels(user: User, res: Response)
@@ -60,43 +67,62 @@ export class ChannelService
 	}
 
 	// Create one room
-	createChannel(name: string, password: string, owner: User, type: string)
+	async createChannel(name: string, password: string, owner: User, type: string)
 	{
 		const newChannel = this.channelRepository.create({
 			name: name,
 			password: password,
-			channel_owner: owner.id,
 			type: type,
-			admin: [owner.id],
-			muted: [],
-			banned: [],
-			users: [owner],
 		});
-		const newMessage = this.messageRepository.create({
-			message: "Welcome to " + name + " channel!",
+		const channel_user = this.channelUserRepository.create({
 			user: owner,
-			date: new Date()
+			channel_owner: true,
+			channel: newChannel
+		})
+		const newMessage = this.messageRepository.create({
+			message: "Welcome to " + name + " channel! It was created by " + channel_user.user.username,
+			user: owner,
+			date: new Date(),
+			channel: newChannel
 		});
-		newChannel.messages = [newMessage];
-		return (this.channelRepository.save(newChannel));
+		return (await this.channelRepository.save(newChannel));
 	}
 
 	async findChannelById(id: string)
 	{
 		const channel = await this.channelRepository.findOne({
 			where: [{id: Number(id)}],
-			relations: ['users']
+			relations: {
+				channel_users: {
+					user: true,
+				}
+			},
 		})
 
 		if (channel)
 			return (channel);
-		throw new HttpException('NotFound', HttpStatus.NOT_FOUND);
+		throw new NotFoundException("Channel not found");
+	}
+
+	async findChannelUserByUser(channel: Channel, user_id: number)
+	{
+		const channel_user = channel.channel_users.find((channel_user) => channel_user.user.id === user_id);
+		// const channel_user = await this.channelUserRepository.findOne({
+		// 	relations: ['user'],
+		// 	loadRelationIds: true,
+		// 	where: [{user: user}],
+		// })
+		if (channel_user)
+			return (channel_user);
+		throw new NotFoundException("User not found in this channel");
 	}
 
 	// Save a new message in a channel
 	async newMessage(channel_id: string, user: User, message: string)
 	{
 		const channel = await this.findChannelById(channel_id);
+		if (this.isMuted(channel, user))
+			throw new ForbiddenException('User is muted');
 
 		const newMessage = this.messageRepository.create({
 			message: message,
@@ -105,141 +131,154 @@ export class ChannelService
 			channel: channel
 		});
 
-		return (this.messageRepository.save(newMessage));
+		return (await this.messageRepository.save(newMessage));
 	}
 
 	// Add admin if true, remove admin if false
 	async addAdmin(requester: User, channel_id: string, user_id: number)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
+		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
 		
-		if (channel.channel_owner !== requester.id)
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		if (!requester_channel_user.channel_owner)
+			throw new UnauthorizedException('Only channel owner can promote admin');
 
-		if (!channel.admin.find(item => item === user_id))
-		{
-			channel.admin.push(user_id);
-			return (this.channelRepository.save(channel));
-		}
+		channel_user.admin = true;
+		return (await this.channelRepository.save(channel));
 	}
 
 	async rmAdmin(requester: User, channel_id: string, user_id: number)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
+		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
 
-		if (channel.channel_owner !== requester.id)
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-		
-		const index = channel.admin.indexOf(user_id);
-		if (index >= 0)
-		{
-			channel.admin.splice(index, 1);
-			return (this.channelRepository.save(channel));
-		}
-		throw new HttpException('NotFound', HttpStatus.NOT_FOUND);
+		if (!requester_channel_user.channel_owner)
+			throw new UnauthorizedException('Only channel owner can remove admin');
+
+		channel_user.admin = false;
+		return (await this.channelRepository.save(channel));
 	}
 
 	async addMuted(requester: User, channel_id: string, user_id: number, muted_time: number)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
+		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
 
-		if (channel.admin.find(admin => admin === requester.id))
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		if (!requester_channel_user.admin && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('User does not have privilege to mute');
+		if ((channel_user.admin || channel_user.channel_owner) && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('You can not mute another admin');
 		
-		if (!channel.muted.find(item => item.user === user_id))
-		{
-			const until = new Date();
-			until.setHours(until.getMinutes() + muted_time);
-			channel.muted.push({user: user_id, until});
-			return (this.channelRepository.save(channel));
-		}
+		const until = new Date();
+		until.setMinutes(until.getMinutes() + muted_time);
+		channel_user.muted = until;
+		return (await this.channelRepository.save(channel));
 	}
 
 	async rmMuted(requester: User, channel_id: string, user_id: number)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
+		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
 
-		if (channel.admin.find(admin => admin === requester.id))
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		if (!requester_channel_user.admin && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('User does not have privilege to unmute');
+		if ((channel_user.admin || channel_user.channel_owner) && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('You can not unmute another admin');
 		
-		const found = channel.muted.find(json => json.user === user_id);
-		const index = channel.muted.indexOf(found);
-		if (index >= 0)
+		channel_user.muted = null;
+		return (await this.channelRepository.save(channel));
+	}
+
+	async isMuted(channel: Channel, user: User)
+	{
+		const channel_user = await this.findChannelUserByUser(channel, user.id);
+		
+		// if not muted
+		if (!channel_user.muted)
+			return (false);
+		else
 		{
-			channel.muted.splice(index, 1);
-			return (this.channelRepository.save(channel));
+			const current = new Date();
+			if (current > channel_user.muted)
+				return (false)
 		}
-		throw new HttpException('NotFound', HttpStatus.NOT_FOUND);
+		return (true);
 	}
 
 	async addBanned(requester: User, channel_id: string, user_id: number)
 	{
 		const channel = await this.findChannelById(channel_id);
-		
-		if (channel.admin.find(admin => admin === requester.id))
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
+		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
 
-		if (!channel.banned.find(item => item === user_id))
-		{
-			channel.banned.push(user_id);
-			return (this.channelRepository.save(channel));
-		}
+		if (!requester_channel_user.admin && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('User does not have privilege to ban');
+
+		if ((channel_user.admin || channel_user.channel_owner) && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('You can not ban another admin');
+
+		channel_user.banned = true;
+		return (await this.channelRepository.save(channel));
 	}
 
 	async rmBanned(requester: User, channel_id: string, user_id: number)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
+		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
 		
-		if (channel.admin.find(admin => admin === requester.id))
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		if (!requester_channel_user.admin && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('User does not have privilege to unban');
 
-		const index = channel.banned.indexOf(user_id);
-		if (index >= 0)
-		{
-			channel.banned.splice(index, 1);
-			return (this.channelRepository.save(channel));
-		}
-		throw new HttpException('NotFound', HttpStatus.NOT_FOUND);
+		channel_user.banned = false;
+		return (await this.channelRepository.save(channel));
 	}
 
-	async addUser(channel_id: string, user: User, password: string)
+	async addUser(channel_id: string, user_id: number, password: string)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const user = await this.usersService.findOne(user_id);
 
 		if (channel.password && channel.password !== password)
-			return ('Wrong Password');
-		
-		if (channel.banned.find((banned) => banned == user.id))
-			return ('User Banned');
+			throw new UnauthorizedException("Wrong Password");
 
-		if (!channel.users.find(item => item.id === user.id))
-		{
-			channel.users.push(user);
-			return (this.channelRepository.save(channel));
+		let channel_user;
+		try {
+			channel_user = await this.findChannelUserByUser(channel, user_id);
 		}
+		catch {
+			channel_user = this.channelUserRepository.create({
+				user: user,
+				channel: channel
+			})
+		}
+		if (channel_user && channel_user.banned)
+			throw new UnauthorizedException("This user was banned in this channel");
+
+			return (await this.channelRepository.save(channel));
 	}
 
-	async rmUser(channel_id: string, user: User)
+	async rmUser(channel_id: string, user_id: number)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
 
-		const index = channel.users.indexOf(user);
-		if (index >= 0)
-		{
-			channel.users.splice(index, 1);
-			return (this.channelRepository.save(channel));
-		}
-		throw new HttpException('NotFound', HttpStatus.NOT_FOUND);
+		this.channelUserRepository.remove(channel_user);
+		return (await this.channelRepository.save(channel));
 	}
 
 	async updatePassword(requester: User, channel_id: string, new_password: string)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, requester.id);
 		
-		if (channel.channel_owner !== requester.id)
-			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-
+		if (!channel_user.channel_owner)
+			throw new UnauthorizedException("Only channel can update password");
 		channel.password = new_password;
-		return (this.channelRepository.save(channel));
+		return (await this.channelRepository.save(channel));
 	}
 }
