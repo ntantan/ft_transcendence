@@ -238,17 +238,17 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
-	async addUser(channel_id: string, user_id: number, password: string)
+	async addUser(channel_id: string, user: User, password: string)
 	{
 		const channel = await this.findChannelById(channel_id);
-		const user = await this.usersService.findOne(user_id);
+		// const user = await this.usersService.findOne(user_id);
 
 		if (channel.password && channel.password !== password)
 			throw new UnauthorizedException("Wrong Password");
 
 		let channel_user;
 		try {
-			channel_user = await this.findChannelUserByUser(channel, user_id);
+			channel_user = await this.findChannelUserByUser(channel, user.id);
 		}
 		catch {
 			channel_user = this.channelUserRepository.create({
@@ -262,10 +262,10 @@ export class ChannelService
 			return (await this.channelRepository.save(channel));
 	}
 
-	async rmUser(channel_id: string, user_id: number)
+	async rmUser(channel_id: string, user: User)
 	{
 		const channel = await this.findChannelById(channel_id);
-		const channel_user = await this.findChannelUserByUser(channel, user_id);
+		const channel_user = await this.findChannelUserByUser(channel, user.id);
 
 		this.channelUserRepository.remove(channel_user);
 		return (await this.channelRepository.save(channel));
