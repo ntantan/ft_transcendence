@@ -38,14 +38,14 @@ export class ChannelService
 		if (!channel)
 			throw new NotFoundException('Channel not found');
 
-		try {
-			var channel_user = await this.findChannelUserByUser(channel, user.id);
-		}
-		catch (error) {
-			throw new UnauthorizedException('User has not joined this channel')
-		}
-		if (channel_user.banned)
-			throw new ForbiddenException('User was banned from this channel')
+		// try {
+		// 	var channel_user = await this.findChannelUserByUser(channel, user.id);
+		// }
+		// catch (error) {
+		// 	throw new UnauthorizedException('User has not joined this channel')
+		// }
+		// if (channel_user.banned)
+		// 	throw new ForbiddenException('User was banned from this channel')
 
 		return (channel);
 	}
@@ -77,10 +77,13 @@ export class ChannelService
 		const channel_user = this.channelUserRepository.create({
 			user: owner,
 			channel_owner: true,
+			admin: false,
+			banned: false,
+			muted: null,
 			channel: newChannel
 		})
 		const newMessage = this.messageRepository.create({
-			message: "Welcome to " + name + " channel! It was created by " + channel_user.user.username,
+			message: "Welcome to " + name + " channel! It was created by ",
 			user: owner,
 			date: new Date(),
 			channel: newChannel
@@ -132,6 +135,21 @@ export class ChannelService
 		});
 
 		return (await this.messageRepository.save(newMessage));
+	}
+
+	async isMuted(channel: Channel, user: User)
+	{
+		const channel_user = await this.findChannelUserByUser(channel, user.id);
+		// if not muted
+		if (!channel_user.muted)
+			return (false);
+		else
+		{
+			const current = new Date();
+			if (current > channel_user.muted)
+				return (false)
+		}
+		return (true);
 	}
 
 	// Add admin if true, remove admin if false
@@ -191,22 +209,6 @@ export class ChannelService
 		
 		channel_user.muted = null;
 		return (await this.channelRepository.save(channel));
-	}
-
-	async isMuted(channel: Channel, user: User)
-	{
-		const channel_user = await this.findChannelUserByUser(channel, user.id);
-		
-		// if not muted
-		if (!channel_user.muted)
-			return (false);
-		else
-		{
-			const current = new Date();
-			if (current > channel_user.muted)
-				return (false)
-		}
-		return (true);
 	}
 
 	async addBanned(requester: User, channel_id: string, user_id: number)
