@@ -3,18 +3,23 @@ import { defineComponent } from "vue";
 import { io } from "socket.io-client";
 import axios from 'axios';
 
-const CHANNELS_URL = "http://localhost:3000/channels";
+import { chatStore } from "@/stores/chat";
+
+const CHANNELS_URL = "http://localhost:3000/channels/";
 
 export default defineComponent ({
     data() {
         return {
+            chatStore,
             socket: {},
+            room: {},
 
             channels: [],
 
             selectedChannel: "",
             roomName: "",
             passWord: "",
+            messageText: "",
 
 			rules: [
 				value => {
@@ -27,7 +32,7 @@ export default defineComponent ({
     },
 
     created() {
-        this.socket = io("http://localhost:3000/chat");
+        this.socket = this.chatStore.socket;
     },
 
     mounted() {
@@ -35,6 +40,14 @@ export default defineComponent ({
         this.socket.on('newRoom', () => {
             this.fetchAllRooms();
         })
+    },
+
+    watch: {
+        selectedChannel(newVal, oldVal) {
+            if (newVal)
+                this.fetchRoom();
+            // console.log(newVal)
+        }
     },
 
     methods: {
@@ -45,11 +58,35 @@ export default defineComponent ({
             })
         },
 
+        fetchRoom() {
+            axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
+            .then((response) => {
+                // console.log(response);
+                this.room = response.data
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+        },
+
         createNewRoom() {
 			if (!this.roomName)
 				return;
             this.socket.emit('createRoom', {room_name: this.roomName, password: this.passWord});
-        }
+            window.scrollTo(0, document.body.scrollHeight);
+        },
+
+        clearTextArea() {
+            this.messageText = "";
+        },
+
+        async SubmitNewMessage() {
+            if (this.messageText && this.selectedChannel){
+                this.socket.emit('textMessage', {msg: this.messageText,
+                                                id: this.selectedChannel});
+                this.clearTextArea();
+            }
+        },
     },
 });
 </script>
@@ -90,11 +127,17 @@ export default defineComponent ({
 
 				<v-card class="h-message my-2">
 					<v-list>
+                        <ul v-for="message in this.room.messages" :key="message">
+                            <li>
+                                {{ message.date }}
+                                {{ message.message }}
+                            </li>
+                        </ul>
 						<!-- <v-list-item v-for="item in channels"> -->
 					</v-list>
 				</v-card>
 
-				<v-text-field label="Enter your message here" >						
+				<v-text-field v-model="messageText" label="Enter your message here" @keydown.enter="SubmitNewMessage()">						
 				</v-text-field>
             </v-col>
 
@@ -115,6 +158,7 @@ export default defineComponent ({
 
 .scroll{
 	overflow-y: scroll;
+    scroll-behavior: smooth;
 }
 
 .h-chat{
