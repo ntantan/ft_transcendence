@@ -61,7 +61,7 @@ export default defineComponent ({
         fetchRoom() {
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
-                // console.log(response);
+                console.log(response);
                 this.room = response.data
             })
             .catch((error) => {
@@ -73,11 +73,14 @@ export default defineComponent ({
 			if (!this.roomName)
 				return;
             this.socket.emit('createRoom', {room_name: this.roomName, password: this.passWord});
+            this.clearTextArea();
             window.scrollTo(0, document.body.scrollHeight);
         },
 
         clearTextArea() {
             this.messageText = "";
+            this.roomName = "";
+            this.passWord = "";
         },
 
         async SubmitNewMessage() {
@@ -145,6 +148,9 @@ export default defineComponent ({
                 <v-card class="h-chat">
                     <h2 class="d-flex justify-center">User</h2>
                     <v-list>
+                        <v-card v-for="user in this.room.user" :key="user">
+                            {{ user.user }}
+                        </v-card>
                         <!-- <v-list-item v-for="item in channels"> -->
                     </v-list>
                 </v-card>
