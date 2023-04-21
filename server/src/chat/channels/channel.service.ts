@@ -133,7 +133,8 @@ export class ChannelService
 		// })
 		if (channel_user)
 			return (channel_user);
-		throw new NotFoundException("User not found in this channel");
+		console.log(channel)
+		throw new NotFoundException("User " + user_id + " not found in this channel");
 	}
 
 	// Save a new message in a channel
@@ -271,8 +272,14 @@ export class ChannelService
 		catch {
 			channel_user = this.channelUserRepository.create({
 				user: user,
+				channel_owner: true,
+				admin: false,
+				banned: false,
+				muted: null,
 				channel: channel
 			})
+			await this.channelUserRepository.save(channel_user);
+			channel.channel_users.push(channel_user);
 		}
 		if (channel_user && channel_user.banned)
 			throw new UnauthorizedException("This user was banned in this channel");

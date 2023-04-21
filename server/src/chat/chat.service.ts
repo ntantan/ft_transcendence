@@ -62,12 +62,12 @@ export class ChatService {
 	{
 		client.rooms.forEach((room) => client.leave(room));
 		client.join("room-" + channel_id);
-		console.log(client.id, "has joined room-" + channel_id);
+		// console.log(client.id, "has joined room-" + channel_id);
 	}
 
 	leaveRoom(client: Socket, channel_id: string)
 	{
 		client.leave("room-" + channel_id);
-		console.log(client.id, "has left room-", channel_id);
+		// console.log(client.id, "has left room-", channel_id);
 	}
 }

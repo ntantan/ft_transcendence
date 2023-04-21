@@ -47,6 +47,10 @@ export default defineComponent ({
             this.fetchAllRooms();
         })
 
+		this.socket.on('updateRoom', () => {
+			this.fetchRoom();
+		})
+
 		// Print an error notification
 		this.socket.on('error', (response: any) => {
 			this.sendSnackbar(response);
@@ -57,14 +61,25 @@ export default defineComponent ({
         selectedChannel(newVal, oldVal) {
             if (newVal)
                 this.fetchRoom();
+			else
+				this.selectedChannel = oldVal
         }
     },
+
+	computed: {
+		selectedRoomname() {
+			const find = this.channels.find((channel) => channel.id == this.selectedChannel);
+			if (find)
+				return (find.name);
+		}
+	},
 
     methods: {
         fetchAllRooms() {
             axios.get(CHANNELS_URL, {withCredentials: true})
             .then((response) => {
                 this.channels = response.data;
+				// console.log(response)
             })
         },
 
@@ -73,12 +88,16 @@ export default defineComponent ({
             .then((response) => {
                 console.log(response);
 				this.isJoined = true;
-                this.room = response.data
+                this.room = response.data;
+				this.socket.emit('joinSocket', {
+					id: this.selectedChannel,
+				});
             })
             .catch((error) => {
+				this.room = {};
 				this.isJoined = false;
 				this.sendSnackbar(error.response.data.message);
-                console.log(error);
+                // console.log(error);
             })
         },
 
@@ -89,6 +108,19 @@ export default defineComponent ({
             this.clearTextArea();
             window.scrollTo(0, document.body.scrollHeight);
         },
+
+		joinRoom() {
+			this.socket.emit('joinRoom', {
+				id: this.selectedChannel,
+				password: "",
+			})
+		},
+
+		leaveRoom() {
+			this.socket.emit('leaveRoom', {
+				id: this.selectedChannel,
+			})
+		},
 
         clearTextArea() {
             this.messageText = "";
@@ -104,31 +136,45 @@ export default defineComponent ({
             }
         },
 
-        muteUser(user: any) {
-            this.socket.emit('muteUser', {id: this.selectedChannel, userMuted: user.id})
+        muteUser(channel_user: any) {
+            this.socket.emit('addMute', {
+								id: this.selectedChannel, 
+								user_id: channel_user.user.id})
             // ajouter temps de mute
         },
 
-        kickUser(user: any) {
-            this.socket.emit('kickUser', {id: this.selectedChannel, userKicked: user.id})
+        kickUser(channel_user: any) {
+            this.socket.emit('kickUser', {
+								id: this.selectedChannel,
+								user_id: channel_user.user.id})
             console.log("kickUser OK");
         },
 
-        changeAdmin(user: any) {
-            this.socket.emit('changeAdmin', {id: this.selectedChannel, userAdmin: user.id})
+        addAdmin(channel_user: any) {
+            this.socket.emit('addAdmin', {
+								id: this.selectedChannel,
+								user_id: channel_user.user.id})
             console.log("changeAdmin OK");
             //changer icone apres changeAdmin
         },
 
+		rmAdmin(channel_user: any) {
+			this.socket.emit('rmAdmin', {
+								id: this.selectedChannel,
+								user_id: channel_user.user.id})
+		},
+
         inviteGame() {
             console.log("inviteGame OK");
         },
-        mergeProps,
+		
 		sendSnackbar(msg: string)
 		{
 			this.snackbar_text = msg;
 			this.snackbar = true;
-		}
+		},
+
+		mergeProps,
     },
 });
 </script>
@@ -163,9 +209,28 @@ export default defineComponent ({
             </v-col>
 
             <v-col align-self="end">
-				<v-card class="h-options">
-					<v-card-title>{{ selectedChannel }}</v-card-title>
-                    <!-- ajouter bouton chgt mdp -->
+
+				<v-card class="h-options mx-auto">
+
+					<v-row v-if="!isJoined && selectedChannel">
+						<v-col>
+							<v-card-title>{{ selectedRoomname }}</v-card-title>
+						</v-col>
+						<v-col class="mr-3" align-self="center" >
+							<v-btn width="200" color="primary" @click="joinRoom()">Join</v-btn>
+						</v-col>
+					</v-row>
+
+					<v-row  v-if="isJoined">
+						<v-col>
+							<v-card-title>{{ room.name }}</v-card-title>
+						</v-col>
+
+						<v-col align-self="center">
+							<v-btn width="200" color="primary" @click="leaveRoom()">Leave</v-btn>
+						</v-col>
+					</v-row>
+
 				</v-card>
 				<v-card class="h-message my-2">
 					<v-list>
@@ -203,7 +268,10 @@ export default defineComponent ({
                             <v-list-item-title><v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn></v-list-item-title>
                         </v-list-item>
                         <v-list-item>
-                            <v-list-item-title><v-btn type="submit" block @click="this.changeAdmin(user)" color="primary">admin</v-btn></v-list-item-title>
+                            <v-list-item-title>
+								<v-btn v-if="!user.admin" type="submit" block @click="this.addAdmin(user)" color="primary">admin</v-btn>
+								<v-btn v-if="user.admin" type="submit" block @click="this.rmAdmin(user)" color="primary">unadmin</v-btn>
+							</v-list-item-title>
                         </v-list-item>
                         <v-list-item>
                             <v-list-item-title><v-btn type="submit" block @click="this.inviteGame()" color="primary">invite game</v-btn></v-list-item-title>
@@ -217,13 +285,6 @@ export default defineComponent ({
 
 	<!-- error bar -->
 	<div class="text-center">
-		<!-- <v-btn
-		color="orange-darken-2"
-		@click="snackbar = true"
-		>
-		Open Snackbar
-		</v-btn> -->
-
 		<v-snackbar
 		v-model="snackbar"
 		:timeout="timeout"

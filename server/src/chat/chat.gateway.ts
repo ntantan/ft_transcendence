@@ -35,7 +35,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 
-		try { const aw = await this.channelService.createChannel(body.room_name, body.password, user, "public"); }
+		try { await this.channelService.createChannel(body.room_name, body.password, user, "public"); }
 		catch (error) { console.log(error); }
 		this.server.emit('newRoom');
 		console.log("room " + body.room_name + " created");
@@ -47,14 +47,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
-
-		try { const aw = await this.channelService.addUser(body.id, user, body.password); }
+		try { await this.channelService.addUser(body.id, user, body.password); }
 		catch (error) { console.log(error); }
 	
 		this.chatService.joinRoom(client, body.id);
 	
-		this.server.to("room-" + body.id).emit('updateRoom');
+		this.server.emit('updateRoom');
     }
+
+	@SubscribeMessage('joinSocket')
+	async joinSocket(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	{
+		const user = await this.chatService.get_ws_user(client);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+		// try { await this.channelService.addUser(body.id, user, body.password); }
+		// catch (error) { console.log(error); }
+	
+		this.chatService.joinRoom(client, body.id);
+	}
 
 	@SubscribeMessage('leaveRoom')
 	async leaveRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket)
@@ -63,7 +74,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 
-		try { const aw = await this.channelService.rmUser(body.id, user); }
+		try { await this.channelService.rmUser(body.id, user); }
 		catch (error) { console.log(error); }
 		this.chatService.leaveRoom(client, body.id);
 
@@ -77,20 +88,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 
-		try { const aw = await this.channelService.newMessage(body.id, user, body.msg); } 
+		try { await this.channelService.newMessage(body.id, user, body.msg); } 
 		catch (error) { console.log(error); }
 
-		this.server.to("room-" + body.id).emit('updateRoom');
+		this.server.emit('updateRoom');
 	}
 
-	@SubscribeMessage('kick')
+	@SubscribeMessage('kickUser')
 	async kickUser(@MessageBody() body: any, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 
-		try { const aw = await this.channelService.kickUser(user, body.id, body.user_id)}
+		try { await this.channelService.kickUser(user, body.id, body.user_id)}
 		catch (error) { console.log(error); }
 
 		this.server.to("room-" + body.id).emit('updateRoom');
@@ -103,10 +114,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 		
-		try { const aw = await this.channelService.addAdmin(user, body.id, body.user_id)}
+		try { await this.channelService.addAdmin(user, body.id, body.user_id)}
 		catch (error) { console.log(error); }
 
 		this.server.to("room-" + body.id).emit('updateRoom');
+		console.log("new admin")
 	}
 
 	@SubscribeMessage('rmAdmin')
@@ -116,7 +128,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 		
-		try { const aw = await this.channelService.rmAdmin(user, body.id, body.user_id)}
+		try { await this.channelService.rmAdmin(user, body.id, body.user_id)}
 		catch (error) { console.log(error); }
 
 		this.server.to("room-" + body.id).emit('updateRoom');
@@ -129,7 +141,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 		
-		try { const aw = await this.channelService.addMuted(user, body.id, body.user_id, 1)}
+		try { await this.channelService.addMuted(user, body.id, body.user_id, 1)}
 		catch (error) { console.log(error); }
 
 		this.server.to("room-" + body.id).emit('updateRoom');
@@ -142,7 +154,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 		
-		try { const aw = await this.channelService.rmMuted(user, body.id, body.user_id)}
+		try { await this.channelService.rmMuted(user, body.id, body.user_id)}
 		catch (error) { console.log(error); }
 
 		this.server.to("room-" + body.id).emit('updateRoom');
