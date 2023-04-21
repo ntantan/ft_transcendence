@@ -122,9 +122,7 @@ export class UsersService {
         }
         const friend = await this.friendRepository.findOne({ where: [{userId:friendId}]});
         if (friend) {
-            const index = user.friends.indexOf(friend);
-            if (index > -1)
-                user.friends.splice(index, 1);
+            user.friends = user.friends.filter(friend => friend.userId !== friendId);
         }
         let blocked = await this.blockedRepository.findOne({ where: [{userId:friendId}]});
         if (!blocked) {
@@ -135,6 +133,7 @@ export class UsersService {
         user.blocked.push(blocked);
         return await this.userRepository.save(user);
     }
+    
     async remove(id: number) {
         const user = await this.findOne(id);
         return this.userRepository.remove(user);

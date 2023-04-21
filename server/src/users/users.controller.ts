@@ -54,6 +54,11 @@ export class UsersController {
     async addFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
         return await this.usersService.addFriend(id, friendId);
     }
+    
+    @Post(':id/block/:blockedId')
+    async blockUser(@Param('id') id: number, @Param('blockedId') blockedId: number): Promise<User> {
+        return await this.usersService.blockUser(id, blockedId);
+    }
 
     @Get('/avatar/:filename')
     async getAvatar(@Param('filename') filename: string): Promise<StreamableFile> {
