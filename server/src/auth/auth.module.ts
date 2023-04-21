@@ -10,6 +10,7 @@ import { UsersService } from 'src/users/users.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Friend } from 'src/users/entities/friend.entity';
+import { Blocked } from 'src/users/entities/blocked.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
@@ -17,7 +18,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Axios } from 'axios';
 
 @Module({
-    imports: [UsersModule, PassportModule, TypeOrmModule.forFeature([User, Friend, Event]), JwtModule.register({
+    imports: [UsersModule, PassportModule, TypeOrmModule.forFeature([User, Friend, Blocked, Event]), JwtModule.register({
         secret: process.env.JWT_SECRET,
         signOptions: { expiresIn: '36000s' },
     }), ConfigModule, HttpModule, Axios],

@@ -116,8 +116,8 @@ export default defineComponent({
     </v-card>
 </template>
 <style>
-    /* .avatar {
-        max-width: 100px;
-        max-height: 100px;
-    } */
+    .avatar {
+        max-width: 150px;
+        max-height: 150px;
+    }
 </style>

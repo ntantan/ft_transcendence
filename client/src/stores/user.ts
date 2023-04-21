@@ -9,4 +9,7 @@ export const userStore = reactive({
 	updateAvatar(newAvatar: string) {
 		userStore.user.avatar = newAvatar;
 	},
+	updateFriends(newFriends: any) {
+		userStore.user.friends = newFriends;
+	}
 })

@@ -12,9 +12,10 @@ import { UsersService } from 'src/users/users.service';
 import { User } from 'src/users/entities/user.entity';
 import { Friend } from 'src/users/entities/friend.entity';
 import { UsersModule } from 'src/users/users.module';
+import { Blocked } from 'src/users/entities/blocked.entity';
 
 @Module({
-    imports: [UsersModule, AuthModule, TypeOrmModule.forFeature([Channel, Messages, ChannelUser, User, Friend])],
+    imports: [UsersModule, AuthModule, TypeOrmModule.forFeature([Channel, Messages, ChannelUser, User, Friend, Blocked])],
     providers: [ChatGateway, ChatService, ChannelService],
 	controllers: [ChannelController],
 })

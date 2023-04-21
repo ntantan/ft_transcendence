@@ -2,6 +2,7 @@ import { IsString, IsNotEmpty } from 'class-validator';
 import { isNumberObject } from 'util/types';
 import { Status } from '../enum/status.enum';
 import { Friend } from '../entities/friend.entity';
+import { Blocked } from '../entities/blocked.entity';
 
 export class CreateUserDto {
     @IsNotEmpty()
@@ -33,4 +34,7 @@ export class CreateUserDto {
 
     @IsNotEmpty()
     readonly friends: Friend[];
+
+    @IsNotEmpty()
+    readonly blocked: Blocked[];
 }

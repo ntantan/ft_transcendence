@@ -17,8 +17,8 @@ export default defineComponent({
     };
   },
 
-  mounted() {
-    this.friends = this.getFriends();
+  async mounted() {
+    this.friends = await this.getFriends();
   },
 
   watch: {
@@ -30,13 +30,13 @@ export default defineComponent({
   },
 
   methods: {
-    removeFriend(userId: number) {
+    async removeFriend(userId: number) {
         console.log("remove friend", userId);
     },
-    sendDm(userId: number) {
+    async sendDm(userId: number) {
         console.log("send dm", userId);
     },
-    seeStats(userId: number) {
+    async seeStats(userId: number) {
         console.log("see stats", userId);
     },
     getAvatar(avatar : string) : string {
@@ -44,6 +44,27 @@ export default defineComponent({
             return avatar;
         }
         return this.URL + avatar;
+    },
+    async block(userId: number) {
+        console.log("block", userId);
+        // TODO : add new route to block user
+        // const res = await fetch("http://localhost:3000/users/" + userStore.user.id, {
+        //     method: "PATCH",
+        //     credentials: "include",
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //     },
+        //     body: JSON.stringify({
+        //         blocked: true,
+        //     }),
+        // });
+        // const data = await res.json();
+        // if (data.error) {
+        //     console.log(data.error);
+        //     return;
+        // }
+        // if (data.blocked)
+        //     this.userStore.updateBlocked(data.blocked);
     },
     async getFriends() : Promise<any[]> {
         const friends = userStore.user.friends;
@@ -61,7 +82,7 @@ export default defineComponent({
                     credentials: "include",
                 }
             );
-            if (friend) {
+            if (friend !== undefined) {
                 const data = await friend.json();
                 friendsList.push(data);
                 this.friendsName.push(data.username);
@@ -70,41 +91,42 @@ export default defineComponent({
                 this.friendsAvatar.push(data.avatar);
             }
         }
-        console.log(friendsList);
-        console.log(friendsList[0].username, friendsList[0].status, friendsList[0].level);
         return friendsList;
     },
+
   },
 });
 </script>
 
 <template>
-    <v-container fluid>
+    <v-container fluid v-show="friends">
         <v-row dense>
                 <v-col
                 cols="12"
+                v-for="friend in friends"
             >
                 <v-card color="#4682B4" theme="dark">
                     <div class="d-flex flex-no-wrap justify-space-between">
                         <div>
-                            <v-card-title class="text-h5" v-for="name in friendsName">
-                                {{ name }}
+                            <v-card-title class="text-h5">
+                                {{ friend.username }}
                             </v-card-title>
-                            <v-card-subtitle v-for="status in friendsStatus">
-                                {{ status }}
+                            <v-card-subtitle >
+                                {{ friend.status }}
                             </v-card-subtitle>
-                            <v-card-subtitle v-for="level in friendsLevel">
-                                Level {{ level }}
+                            <v-card-subtitle>
+                                Level {{ friend.level }}
                             </v-card-subtitle>
                             <v-spacer></v-spacer>
                             <v-card-actions>
-                                <v-btn size="small" variant="text" icon="mdi-delete" @click="removeFriend(item.id)"></v-btn>
-                                <v-btn size="small" variant="text" icon="mdi-send" @click="sendDm(item.id)"></v-btn>
-                                <v-btn size="small" variant="text" icon="mdi-scoreboard" @click="seeStats(item.id)"></v-btn>
+                                <v-btn size="small" variant="text" icon="mdi-delete" @click="removeFriend(friend.id)"></v-btn>
+                                <v-btn size="small" variant="text" icon="mdi-send" @click="sendDm(friend.id)"></v-btn>
+                                <v-btn size="small" variant="text" icon="mdi-scoreboard" @click="seeStats(friend.id)"></v-btn>
+                                <v-btn size="small" variant="text" icon="mdi-block-helper" @click="block(friend.id)"></v-btn>
                             </v-card-actions>
                         </div>
                         <v-avatar size="150" rounded="0">
-                            <v-img v-for="avatar in friendsAvatar" :src="getAvatar(avatar)"></v-img>
+                            <v-img :src="getAvatar(friend.avatar)"></v-img>
                         </v-avatar>
                     </div>
                 </v-card>

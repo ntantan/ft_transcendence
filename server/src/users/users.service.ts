@@ -12,6 +12,7 @@ import { Status } from './enum/status.enum';
 import { createReadStream } from 'fs';
 import { join } from 'path';
 import { CreateFriendDto } from './dto/create-friend.dto';
+import { Blocked } from './entities/blocked.entity';
 
 @Injectable()
 export class UsersService {
@@ -20,20 +21,21 @@ export class UsersService {
         private readonly userRepository: Repository<User>,
         @InjectRepository(Friend)
         private readonly friendRepository: Repository<Friend>,
+        @InjectRepository(Blocked)
+        private readonly blockedRepository: Repository<Blocked>,
         private readonly connection: DataSource,
-        private readonly configService: ConfigService,
     ) {}
 
     findAll(paginationQuery: PaginationQueryDto) {
         return this.userRepository.find({
-            relations: ['friends'],
+            relations: ['friends', 'blocked'],
         });
     }
 
     async findOne(id: number) {
         const user = await this.userRepository.findOne({
             where: [ {id : id } ],
-            relations: ['friends'],
+            relations: ['friends', 'blocked'],
         });
         if (!user) {
             throw new NotFoundException(`User #${id} not found`);
@@ -45,9 +47,13 @@ export class UsersService {
         const friends = await Promise.all(
           createUserDto.friends.map(friend => this.preloadFriend(friend)),  
         );
+        const blocked = await Promise.all(
+            createUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
+        );
         const user = this.userRepository.create({
             ...createUserDto,
             friends,
+            blocked,
         });
         return this.userRepository.save(user);
     }
@@ -57,11 +63,16 @@ export class UsersService {
         (await Promise.all(
             updateUserDto.friends.map(friend => this.preloadFriend(friend)),
         ));
+        const blocked = updateUserDto.blocked &&
+        (await Promise.all(
+            updateUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
+        ));
         const user = await this.userRepository.preload({
             //username: (await this.findOne(id)).username,
             id: id,
             ...updateUserDto,
-            friends
+            friends,
+            blocked,
         });
         if (!user) {
             throw new NotFoundException(`User #${id} not found`);
@@ -102,6 +113,22 @@ export class UsersService {
         return await this.userRepository.save(user);
     }
     
+    async blockUser(id: number, friendId: number) : Promise<User> {
+        const user = await this.findOne(id);
+        const blockedAsUser = await this.findOne(friendId);
+  
+        if (!user || !blockedAsUser) {
+            throw new NotFoundException(`User(s) not found`);
+        }
+        const friend = await this.friendRepository.findOne({ where: [{userId:friendId}]});
+        if (friend) {
+            const index = user.friends.indexOf(friend);
+            if (index > -1)
+                user.friends.splice(index, 1);
+        }
+        user.blocked.push({userId: blockedAsUser.id});
+        return await this.userRepository.save(user);
+    }
     async remove(id: number) {
         const user = await this.findOne(id);
         return this.userRepository.remove(user);
@@ -163,6 +190,14 @@ export class UsersService {
         return this.friendRepository.create({ ...friend, });
     }
 
+    private async preloadBlocked(blocked: Blocked): Promise<Blocked> {
+        const existingBlocked = await this.blockedRepository.findOne({ where: [{userId:blocked.userId}]});
+        if (existingBlocked) {
+            return existingBlocked;
+        }
+        return this.blockedRepository.create({ ...blocked, });
+    }
+
     async saveUserInfo(token : string, info : { login: string, imgUrl: string}) : Promise<User> {
         const user = await this.userRepository.findOne({
             where: [ {username : info.login } ],
@@ -179,6 +214,7 @@ export class UsersService {
                 lose: 0,
                 two_fa: false,
                 friends: [],
+                blocked: [],
             };
             return this.create(createUserDto);
         }

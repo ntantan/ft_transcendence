@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, JoinTable, ManyToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { Friend } from './friend.entity';
 import { Status } from '../enum/status.enum';
+import { Blocked } from './blocked.entity';
 
 @Entity()
 export class User {
@@ -40,5 +41,15 @@ export class User {
         },
         )
     friends: Friend[];
+
+    @JoinTable()
+    @ManyToMany(
+        type => Blocked,
+        (blocked) => blocked.users,
+        {
+            cascade: true,
+        }
+    )
+    blocked: Blocked[];
 
 }

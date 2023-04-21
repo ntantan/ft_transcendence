@@ -20,6 +20,7 @@ export class ChatService {
 		lose: 0,
 		two_fa: false,
 		friends: null,
+		blocked: [],
 	};
 
     constructor(
