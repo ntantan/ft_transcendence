@@ -277,13 +277,28 @@ export class ChannelService
 		if (channel_user && channel_user.banned)
 			throw new UnauthorizedException("This user was banned in this channel");
 
-			return (await this.channelRepository.save(channel));
+		return (await this.channelRepository.save(channel));
 	}
 
 	async rmUser(channel_id: string, user: User)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user.id);
+
+		this.channelUserRepository.remove(channel_user);
+		return (await this.channelRepository.save(channel));
+	}
+
+	async kickUser(requester: User, channel_id: string, user: User)
+	{
+		const channel = await this.findChannelById(channel_id);
+		const channel_user = await this.findChannelUserByUser(channel, user.id);
+		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
+
+		if (!requester_channel_user.admin && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('User does not have privilege to kick');
+		if ((channel_user.admin || channel_user.channel_owner) && !requester_channel_user.channel_owner)
+			throw new UnauthorizedException('You can not kick another admin');
 
 		this.channelUserRepository.remove(channel_user);
 		return (await this.channelRepository.save(channel));

@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
+import { mergeProps } from "vue";
 
 const CHANNELS_URL = "http://localhost:3000/channels/";
 
@@ -12,6 +13,7 @@ export default defineComponent ({
         return {
             chatStore,
             socket: {},
+			isJoined: false,
             room: {},
 
             channels: [],
@@ -28,6 +30,10 @@ export default defineComponent ({
 					return ("Field can not be empty")
 				}
 			],
+
+			snackbar: false,
+			snackbar_text: 'My timeout is set to 2000.',
+			timeout: 2000,
         }
     },
 
@@ -40,13 +46,17 @@ export default defineComponent ({
         this.socket.on('newRoom', () => {
             this.fetchAllRooms();
         })
+
+		// Print an error notification
+		this.socket.on('error', (response: any) => {
+			this.sendSnackbar(response);
+		})
     },
 
     watch: {
         selectedChannel(newVal, oldVal) {
             if (newVal)
                 this.fetchRoom();
-            // console.log(newVal)
         }
     },
 
@@ -62,9 +72,12 @@ export default defineComponent ({
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
                 console.log(response);
+				this.isJoined = true;
                 this.room = response.data
             })
             .catch((error) => {
+				this.isJoined = false;
+				this.sendSnackbar(error.response.data.message);
                 console.log(error);
             })
         },
@@ -90,6 +103,32 @@ export default defineComponent ({
                 this.clearTextArea();
             }
         },
+
+        muteUser(user: any) {
+            this.socket.emit('muteUser', {id: this.selectedChannel, userMuted: user.id})
+            // ajouter temps de mute
+        },
+
+        kickUser(user: any) {
+            this.socket.emit('kickUser', {id: this.selectedChannel, userKicked: user.id})
+            console.log("kickUser OK");
+        },
+
+        changeAdmin(user: any) {
+            this.socket.emit('changeAdmin', {id: this.selectedChannel, userAdmin: user.id})
+            console.log("changeAdmin OK");
+            //changer icone apres changeAdmin
+        },
+
+        inviteGame() {
+            console.log("inviteGame OK");
+        },
+        mergeProps,
+		sendSnackbar(msg: string)
+		{
+			this.snackbar_text = msg;
+			this.snackbar = true;
+		}
     },
 });
 </script>
@@ -126,17 +165,17 @@ export default defineComponent ({
             <v-col align-self="end">
 				<v-card class="h-options">
 					<v-card-title>{{ selectedChannel }}</v-card-title>
+                    <!-- ajouter bouton chgt mdp -->
 				</v-card>
-
 				<v-card class="h-message my-2">
 					<v-list>
                         <ul v-for="message in this.room.messages" :key="message">
                             <li>
+                                <!-- mise en page messages -->
                                 {{ message.date }}
                                 {{ message.message }}
                             </li>
                         </ul>
-						<!-- <v-list-item v-for="item in channels"> -->
 					</v-list>
 				</v-card>
 
@@ -147,22 +186,62 @@ export default defineComponent ({
             <v-col cols="3">
                 <v-card class="h-chat">
                     <h2 class="d-flex justify-center">User</h2>
+
+                    <v-menu v-for="user in this.room.channel_users" :key="user">
+                        <template v-slot:activator="{ props: menu }">
+                            <v-tooltip>
+                                <template v-slot:activator="{ props: tooltip }">
+                                    <v-btn color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn> 
+                                </template>
+                            </v-tooltip>
+                        </template>
                     <v-list>
-                        <v-card v-for="user in this.room.user" :key="user">
-                            {{ user.user }}
-                            <v-card-actions>
-                                <v-btn type="submit" block @click="this.muteUser()" color="primary">mute</v-btn>
-                                <v-btn type="submit" block @click="this.kickUser()" color="secondary">kick</v-btn>
-                                <v-btn type="submit" block @click="this.changeAdmin()" color="other">admin</v-btn>
-                                <v-btn type="submit" blocl @click="this.inviteGame()" color="primary">invite game</v-btn>>
-                            </v-card-actions>
-                        </v-card>
-                        <!-- <v-list-item v-for="item in channels"> -->
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn></v-list-item-title>
+                        </v-list-item>
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn></v-list-item-title>
+                        </v-list-item>
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.changeAdmin(user)" color="primary">admin</v-btn></v-list-item-title>
+                        </v-list-item>
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.inviteGame()" color="primary">invite game</v-btn></v-list-item-title>
+                        </v-list-item>
                     </v-list>
+                    </v-menu>
                 </v-card>
             </v-col>
         </v-row>
     </v-card>
+
+	<!-- error bar -->
+	<div class="text-center">
+		<!-- <v-btn
+		color="orange-darken-2"
+		@click="snackbar = true"
+		>
+		Open Snackbar
+		</v-btn> -->
+
+		<v-snackbar
+		v-model="snackbar"
+		:timeout="timeout"
+		>
+		{{ snackbar_text }}
+
+			<template v-slot:actions>
+				<v-btn
+				color="blue"
+				variant="text"
+				@click="snackbar = false"
+				>
+				Close
+				</v-btn>
+			</template>
+		</v-snackbar>
+	</div>
+
 </template>
 
 <style>

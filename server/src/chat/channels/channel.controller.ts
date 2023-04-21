@@ -4,13 +4,15 @@ import { ChannelService } from "./channel.service";
 import { UpdateUserDTO } from "./dto/update-user.dto";
 import { createMessageDTO } from "./dto/create-message.dto";
 import { AuthService } from "src/auth/auth.service";
+import { ChatGateway } from "../chat.gateway";
 
 
 @Controller("channels")
 export class ChannelController
 {
 	constructor(private readonly channelService: ChannelService,
-				private readonly authService: AuthService) {}
+				private readonly authService: AuthService,
+				private readonly chatGateway: ChatGateway) {}
 
 	// get all the channels created with messages at localhost:3000/channels
 	@Get()
