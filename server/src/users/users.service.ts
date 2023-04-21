@@ -126,7 +126,13 @@ export class UsersService {
             if (index > -1)
                 user.friends.splice(index, 1);
         }
-        user.blocked.push({userId: blockedAsUser.id});
+        let blocked = await this.blockedRepository.findOne({ where: [{userId:friendId}]});
+        if (!blocked) {
+            blocked = new Blocked();
+            blocked.userId = blockedAsUser.id;
+            this.blockedRepository.save(blocked);
+        }
+        user.blocked.push(blocked);
         return await this.userRepository.save(user);
     }
     async remove(id: number) {
