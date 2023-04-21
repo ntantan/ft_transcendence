@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
+import { mergeProps } from "vue";
 
 const CHANNELS_URL = "http://localhost:3000/channels/";
 
@@ -46,7 +47,6 @@ export default defineComponent ({
         selectedChannel(newVal, oldVal) {
             if (newVal)
                 this.fetchRoom();
-            // console.log(newVal)
         }
     },
 
@@ -90,6 +90,27 @@ export default defineComponent ({
                 this.clearTextArea();
             }
         },
+
+        muteUser(user: any) {
+            this.socket.emit('muteUser', {id: this.selectedChannel, userMuted: user.id})
+            // ajouter temps de mute
+        },
+
+        kickUser(user: any) {
+            this.socket.emit('kickUser', {id: this.selectedChannel, userKicked: user.id})
+            console.log("kickUser OK");
+        },
+
+        changeAdmin(user: any) {
+            this.socket.emit('changeAdmin', {id: this.selectedChannel, userAdmin: user.id})
+            console.log("changeAdmin OK");
+            //changer icone apres changeAdmin
+        },
+
+        inviteGame() {
+            console.log("inviteGame OK");
+        },
+        mergeProps,
     },
 });
 </script>
@@ -126,17 +147,17 @@ export default defineComponent ({
             <v-col align-self="end">
 				<v-card class="h-options">
 					<v-card-title>{{ selectedChannel }}</v-card-title>
+                    <!-- ajouter bouton chgt mdp -->
 				</v-card>
-
 				<v-card class="h-message my-2">
 					<v-list>
                         <ul v-for="message in this.room.messages" :key="message">
                             <li>
+                                <!-- mise en page messages -->
                                 {{ message.date }}
                                 {{ message.message }}
                             </li>
                         </ul>
-						<!-- <v-list-item v-for="item in channels"> -->
 					</v-list>
 				</v-card>
 
@@ -147,18 +168,30 @@ export default defineComponent ({
             <v-col cols="3">
                 <v-card class="h-chat">
                     <h2 class="d-flex justify-center">User</h2>
+
+                    <v-menu v-for="user in this.room.channel_users" :key="user">
+                        <template v-slot:activator="{ props: menu }">
+                            <v-tooltip>
+                                <template v-slot:activator="{ props: tooltip }">
+                                    <v-btn color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn> 
+                                </template>
+                            </v-tooltip>
+                        </template>
                     <v-list>
-                        <v-card v-for="user in this.room.user" :key="user">
-                            {{ user.user }}
-                            <v-card-actions>
-                                <v-btn type="submit" block @click="this.muteUser()" color="primary">mute</v-btn>
-                                <v-btn type="submit" block @click="this.kickUser()" color="secondary">kick</v-btn>
-                                <v-btn type="submit" block @click="this.changeAdmin()" color="other">admin</v-btn>
-                                <v-btn type="submit" blocl @click="this.inviteGame()" color="primary">invite game</v-btn>>
-                            </v-card-actions>
-                        </v-card>
-                        <!-- <v-list-item v-for="item in channels"> -->
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn></v-list-item-title>
+                        </v-list-item>
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn></v-list-item-title>
+                        </v-list-item>
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.changeAdmin(user)" color="primary">admin</v-btn></v-list-item-title>
+                        </v-list-item>
+                        <v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.inviteGame()" color="primary">invite game</v-btn></v-list-item-title>
+                        </v-list-item>
                     </v-list>
+                    </v-menu>
                 </v-card>
             </v-col>
         </v-row>
