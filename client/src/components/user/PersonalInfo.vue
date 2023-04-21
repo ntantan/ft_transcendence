@@ -49,7 +49,25 @@ export default defineComponent({
                 return this.userAvatar;
             }
             return this.URL + this.userAvatar;
-        }
+        },
+
+        async changeUsername() {
+            this.nameEdit = false;
+            //user.username send to server
+            await fetch("http://localhost:3000/users/" + this.user.id, {
+                method: "PATCH",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    username: this.user.username,
+                }),
+            }).catch((err) => {
+                console.log(err);
+            });
+            this.userStore.updateUserName(this.user.username);
+        },
     },
 	
 }); 
@@ -58,7 +76,7 @@ export default defineComponent({
 <template>
     <v-card>
         <v-card-title>
-            <v-avatar size="100">
+            <v-avatar size="150" rounded="0">
                 <img :src="getAvatar()" class="avatar" />
             </v-avatar>
             <v-spacer></v-spacer>
@@ -75,20 +93,20 @@ export default defineComponent({
             @click.stop="nameEdit = !nameEdit"
             >Edit</v-btn>
           </template></v-card>
-        <v-card v-if="nameEdit"
-            title="New username:"
-        >
-        <template>
-            <input type="text" v-model="user.username" />
-            <v-btn
-            variant="text"
-            icon="mdi-chevron-left"
-            @click.stop="nameEdit = !nameEdit"
-            >Save</v-btn>
-        </template></v-card>
+        <v-card v-if="nameEdit">
+            <v-card-title>
+                Please type your new username
+            </v-card-title>
+            <v-card-text>
+                <v-form>
+                    <v-text-field label="New username" v-model="user.username" required @keydown.enter.prevent="changeUsername"></v-text-field>
+                    <v-btn color="primary" @click.stop="changeUsername">Save</v-btn>
+                </v-form>
+            </v-card-text>
+        </v-card>
         <v-card
             title="Level"
-            :subtitle="user.level"
+            :subtitle="user.level.toString()"
         ></v-card>
         <v-card
             title="Status"
@@ -98,8 +116,8 @@ export default defineComponent({
     </v-card>
 </template>
 <style>
-    .avatar {
+    /* .avatar {
         max-width: 100px;
         max-height: 100px;
-    }
+    } */
 </style>

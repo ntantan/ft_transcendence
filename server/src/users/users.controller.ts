@@ -11,6 +11,7 @@ import 'multer';
 import * as fs from 'fs';
 import { createReadStream } from 'fs';
 import { join } from 'path';
+import { User } from './entities/user.entity';
 
 @Controller('users')
 export class UsersController {
@@ -47,6 +48,11 @@ export class UsersController {
         return await this.usersService.updateAvatar(file.originalname, id);
         //https://github.dev/oumeimatt/ft_transcendence/tree/main/src/frontend/src
         //settings/avatar
+    }
+
+    @Post(':id/friends/:friendId')
+    async addFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
+        return await this.usersService.addFriend(id, friendId);
     }
 
     @Get('/avatar/:filename')

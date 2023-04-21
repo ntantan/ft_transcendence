@@ -10,9 +10,8 @@ import { Event } from '../events/entities/event.entity';
 import { ConfigService } from '@nestjs/config';
 import { Status } from './enum/status.enum';
 import { createReadStream } from 'fs';
-import { join} from 'path';
-
-const URL = 'http://localhost:3000/';
+import { join } from 'path';
+import { CreateFriendDto } from './dto/create-friend.dto';
 
 @Injectable()
 export class UsersService {
@@ -44,7 +43,7 @@ export class UsersService {
 
     async create(createUserDto: CreateUserDto) : Promise<User> {
         const friends = await Promise.all(
-          createUserDto.friends.map(username => this.preloadFriendByName(username)),  
+          createUserDto.friends.map(friend => this.preloadFriend(friend)),  
         );
         const user = this.userRepository.create({
             ...createUserDto,
@@ -53,10 +52,10 @@ export class UsersService {
         return this.userRepository.save(user);
     }
 
-    async update(id: number, updateUserDto: UpdateUserDto) {
+    async update(id: number, updateUserDto: UpdateUserDto) : Promise<User> {
         const friends = updateUserDto.friends &&
         (await Promise.all(
-            updateUserDto.friends.map(username => this.preloadFriendByName(username)),
+            updateUserDto.friends.map(friend => this.preloadFriend(friend)),
         ));
         const user = await this.userRepository.preload({
             //username: (await this.findOne(id)).username,
@@ -77,7 +76,6 @@ export class UsersService {
             throw new NotFoundException(`User #${id} not found`);
         }
         user.avatar = avatar;
-        console.log("the user avatar path is: " + user.avatar);
 
         return await this.userRepository.save(user);
     }
@@ -85,6 +83,23 @@ export class UsersService {
     async getAvatar(avatar: string) : Promise<StreamableFile> {
         const file = await createReadStream(join(process.cwd(), "public", avatar));
         return new StreamableFile(file);
+    }
+
+    async addFriend(id: number, friendId: number) : Promise<User> {
+        const user = await this.findOne(id);
+        const friendAsUser = await this.findOne(friendId);
+  
+        if (!user || !friendAsUser) {
+            throw new NotFoundException(`User(s) not found`);
+        }
+        let friend = await this.friendRepository.findOne({ where: [{userId:friendId}]});
+        if (!friend) {
+            friend = new Friend();
+            friend.userId = friendAsUser.id;
+            this.friendRepository.save(friend);
+        }
+        user.friends.push(friend);
+        return await this.userRepository.save(user);
     }
     
     async remove(id: number) {
@@ -140,12 +155,12 @@ export class UsersService {
         }
     }
 
-    private async preloadFriendByName(username: string): Promise<Friend> {
-        const existingFriend = await this.friendRepository.findOne({ where: [{username:username}]});
+    private async preloadFriend(friend: Friend): Promise<Friend> {
+        const existingFriend = await this.friendRepository.findOne({ where: [{userId:friend.userId}]});
         if (existingFriend) {
             return existingFriend;
         }
-        return this.friendRepository.create({ username });
+        return this.friendRepository.create({ ...friend, });
     }
 
     async saveUserInfo(token : string, info : { login: string, imgUrl: string}) : Promise<User> {

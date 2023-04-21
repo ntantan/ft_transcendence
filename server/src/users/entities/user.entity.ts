@@ -40,6 +40,5 @@ export class User {
         },
         )
     friends: Friend[];
-    
-    // bcrypt
+
 }

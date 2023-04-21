@@ -2,6 +2,10 @@
 import { defineComponent } from "vue";
 import { userStore } from '@/stores/user';
 import PersonalInfo from '../components/user/PersonalInfo.vue';
+import TwoFactorAuth from '../components/user/TwoFactorAuth.vue';
+import Friends from '../components/user/Friends.vue';
+import Stats from '../components/user/Stats.vue';
+import MatchHistory from '../components/user/MatchHistory.vue';
 
 export default defineComponent({
  
@@ -9,15 +13,15 @@ export default defineComponent({
 
   components: {
     PersonalInfo,
-    // TwoFactorAuth,
-    // Friends,
-    // Stats,
-    // MatchHistory,
+    TwoFactorAuth,
+    Friends,
+    Stats,
+    MatchHistory,
   },
 
   data() {
     return {
-      selected: PersonalInfo,
+      selected: 'PersonalInfo',
       drawer: true,
       rail: true,
       URL: "http://localhost:3000/users/avatar/",
@@ -42,6 +46,10 @@ export default defineComponent({
                 return this.avatar;
             }
             return this.URL + this.avatar;
+    },
+
+    selectComponent(item) {
+      this.selected = item;
     }
   },
   mounted() {
@@ -77,11 +85,11 @@ export default defineComponent({
 
         <v-divider></v-divider>
 
-          <v-list-item prepend-icon="mdi-account" title="Personal info" value="personalInfo"></v-list-item>
-          <v-list-item prepend-icon="mdi-two-factor-authentication" title="Two-factor auth" value="twoFactorAuth"></v-list-item>
-          <v-list-item prepend-icon="mdi-account-heart" title="Friends" value="friends"></v-list-item>
-          <v-list-item prepend-icon="mdi-scoreboard" title="My stats" value="stats"></v-list-item>
-          <v-list-item prepend-icon="mdi-history" title="Match history" value="matchHistory"></v-list-item>
+          <v-list-item prepend-icon="mdi-account" title="Personal info" value="personalInfo" @click="selectComponent('PersonalInfo')"></v-list-item>
+          <v-list-item prepend-icon="mdi-two-factor-authentication" title="Two-factor auth" value="twoFactorAuth" @click="selectComponent('TwoFactorAuth')"></v-list-item>
+          <v-list-item prepend-icon="mdi-account-heart" title="Friends" value="friends" @click="selectComponent('Friends')"></v-list-item>
+          <v-list-item prepend-icon="mdi-scoreboard" title="My stats" value="stats" @click="selectComponent('Stats')"></v-list-item>
+          <v-list-item prepend-icon="mdi-history" title="Match history" value="matchHistory" @click="selectComponent('MatchHistory')"></v-list-item>
       </v-list>
       </v-navigation-drawer>
 
