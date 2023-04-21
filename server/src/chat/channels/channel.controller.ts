@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, Res } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Param, Post, Req, Res, UnauthorizedException } from "@nestjs/common";
 import { Request, Response } from 'express';
 import { ChannelService } from "./channel.service";
 import { UpdateUserDTO } from "./dto/update-user.dto";
@@ -14,22 +14,26 @@ export class ChannelController
 
 	// get all the channels created with messages at localhost:3000/channels
 	@Get()
-	getAllChannels()
+	async getAllChannels(@Req() req: Request)
 	{
+		if (!req.cookies['jwt'])
+			throw new BadRequestException('No jwt provided');
+		const user = await this.authService.verifyJwt(req.cookies['jwt']);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
 		return (this.channelService.getAllChannel());
 	}
 
 	@Get('/private')
-	async getPrivateChannels(@Req() req: Request, @Res() res: Response)
+	async getPrivateChannels(@Req() req: Request)
 	{
 		if (!req.cookies['jwt'])
-			return(res.status(401).send("no jwt provided"));
-
+			throw new BadRequestException('No jwt provided');
 		const user = await this.authService.verifyJwt(req.cookies['jwt']);
 		if (!user)
-			return(res.status(401).send("jwt verification failed"));
+			throw new UnauthorizedException('Jwt verification failed');
 
-		return (this.channelService.getPrivateChannels(user, res));
+		return (this.channelService.getPrivateChannels(user));
 	}
 
 	// send message, expect body to have channel id as "id" and message as "message"
@@ -94,15 +98,20 @@ export class ChannelController
 
 	// get the channel with messages at id ex: localhost:3000/channels/1
 	@Get(':id')
-	async getChannel(@Param('id') id: string, @Req() req: Request, @Res() res: Response)
+	async getChannel(@Param('id') id: string, @Req() req: Request)
 	{
 		if (!req.cookies['jwt'])
-			return(res.status(401).send("no jwt provided"));
+			throw new BadRequestException('No jwt provided');
 
 		const user = await this.authService.verifyJwt(req.cookies['jwt']);
 		if (!user)
-			return(res.status(401).send("jwt verification failed"));
+			throw new UnauthorizedException('Jwt verification failed');
 
-		return (await this.channelService.getChannel(id, user, res));
+		try {	
+			return (await this.channelService.getChannel(id, user));
+		}
+		catch (error) {
+			throw (error);
+		}
 	}
 }

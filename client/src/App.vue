@@ -6,6 +6,7 @@ import BannerBar from "./components/BannerBar.vue";
 import NavBar from "./components/NavBar.vue";
 
 import { gameStore } from "./stores/game";
+import { chatStore } from "./stores/chat";
 
 export default defineComponent({
 	name: "App",
@@ -25,13 +26,16 @@ export default defineComponent({
 
 	data() {
 		return {
-			gameStore
+			gameStore,
+			chatStore
 		};
 	},
 
 	created() {
 		const localhost = import.meta.env.VITE_LOCALHOST; // ${localhost}
 		this.gameStore.socket = io(`http://localhost:3000/game`, { withCredentials: true });
+
+		this.chatStore.socket = io(`http://localhost:3000/chat`, { withCredentials: true })
 	},
 
 	mounted() {
