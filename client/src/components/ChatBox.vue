@@ -13,6 +13,7 @@ export default defineComponent ({
         return {
             chatStore,
             socket: {},
+			isJoined: false,
             room: {},
 
             channels: [],
@@ -29,6 +30,10 @@ export default defineComponent ({
 					return ("Field can not be empty")
 				}
 			],
+
+			snackbar: false,
+			snackbar_text: 'My timeout is set to 2000.',
+			timeout: 2000,
         }
     },
 
@@ -41,6 +46,11 @@ export default defineComponent ({
         this.socket.on('newRoom', () => {
             this.fetchAllRooms();
         })
+
+		// Print an error notification
+		this.socket.on('error', (response: any) => {
+			this.sendSnackbar(response);
+		})
     },
 
     watch: {
@@ -62,9 +72,12 @@ export default defineComponent ({
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
                 console.log(response);
+				this.isJoined = true;
                 this.room = response.data
             })
             .catch((error) => {
+				this.isJoined = false;
+				this.sendSnackbar(error.response.data.message);
                 console.log(error);
             })
         },
@@ -111,6 +124,11 @@ export default defineComponent ({
             console.log("inviteGame OK");
         },
         mergeProps,
+		sendSnackbar(msg: string)
+		{
+			this.snackbar_text = msg;
+			this.snackbar = true;
+		}
     },
 });
 </script>
@@ -196,6 +214,34 @@ export default defineComponent ({
             </v-col>
         </v-row>
     </v-card>
+
+	<!-- error bar -->
+	<div class="text-center">
+		<!-- <v-btn
+		color="orange-darken-2"
+		@click="snackbar = true"
+		>
+		Open Snackbar
+		</v-btn> -->
+
+		<v-snackbar
+		v-model="snackbar"
+		:timeout="timeout"
+		>
+		{{ snackbar_text }}
+
+			<template v-slot:actions>
+				<v-btn
+				color="blue"
+				variant="text"
+				@click="snackbar = false"
+				>
+				Close
+				</v-btn>
+			</template>
+		</v-snackbar>
+	</div>
+
 </template>
 
 <style>
