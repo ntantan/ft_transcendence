@@ -33,19 +33,26 @@ export class ChannelService
 	{
 		const channel = await this.channelRepository.findOne({
 			where: [{id: Number(id)}],
-			relations: ['messages', 'channel_users'],
+			relations: {
+				channel_users: {
+					user: true,
+				},
+				messages: {
+					user: true
+				}
+			},
 		});
 		if (!channel)
 			throw new NotFoundException('Channel not found');
-
-		// try {
-		// 	var channel_user = await this.findChannelUserByUser(channel, user.id);
-		// }
-		// catch (error) {
-		// 	throw new UnauthorizedException('User has not joined this channel')
-		// }
-		// if (channel_user.banned)
-		// 	throw new ForbiddenException('User was banned from this channel')
+			
+		try {
+			var channel_user = await this.findChannelUserByUser(channel, user.id);
+		}
+		catch (error) {
+			throw new UnauthorizedException('User has not joined this channel')
+		}
+		if (channel_user.banned)
+			throw new ForbiddenException('User was banned from this channel')
 
 		return (channel);
 	}
@@ -74,6 +81,8 @@ export class ChannelService
 			password: password,
 			type: type,
 		});
+		const b = await this.channelRepository.save(newChannel);
+	
 		const channel_user = this.channelUserRepository.create({
 			user: owner,
 			channel_owner: true,
@@ -81,13 +90,20 @@ export class ChannelService
 			banned: false,
 			muted: null,
 			channel: newChannel
-		})
+		});
+		const c = await this.channelUserRepository.save(channel_user);
+		newChannel.channel_users = [channel_user];
+
+		const a = await this.channelRepository.save(newChannel);
 		const newMessage = this.messageRepository.create({
 			message: "Welcome to " + name + " channel! It was created by ",
 			user: owner,
 			date: new Date(),
 			channel: newChannel
 		});
+		const d = await this.messageRepository.save(newMessage);
+		newChannel.messages = [newMessage];
+	
 		return (await this.channelRepository.save(newChannel));
 	}
 

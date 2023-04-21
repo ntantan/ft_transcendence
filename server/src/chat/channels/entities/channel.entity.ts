@@ -18,19 +18,6 @@ export class Channel {
 	@Column()
 	type: string;
 
-	// @Column()
-	// channel_owner: number;
-
-	// // Define who is the admin of the channel
-	// @Column("text", {array: true, nullable: true})
-	// admin: number[];
-
-	// @Column("jsonb", {nullable: true})
-	// muted: {user: number, until: Date}[];
-	
-	// @Column("text", {array: true, nullable: true})
-	// banned: number[];
-
 	@JoinTable()
 	@OneToMany(() => ChannelUser, channelUser => channelUser.channel, {cascade: true})
 	channel_users: ChannelUser[]
