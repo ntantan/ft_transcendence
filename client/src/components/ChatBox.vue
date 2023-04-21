@@ -52,7 +52,7 @@ export default defineComponent ({
 
     methods: {
         fetchAllRooms() {
-            axios.get(CHANNELS_URL)
+            axios.get(CHANNELS_URL, {withCredentials: true})
             .then((response) => {
                 this.channels = response.data;
             })
