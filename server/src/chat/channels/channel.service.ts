@@ -140,7 +140,7 @@ export class ChannelService
 	async newMessage(channel_id: string, user: User, message: string)
 	{
 		const channel = await this.findChannelById(channel_id);
-		if (this.isMuted(channel, user))
+		if (await this.isMuted(channel, user))
 			throw new ForbiddenException('User is muted');
 
 		const newMessage = this.messageRepository.create({
@@ -157,7 +157,7 @@ export class ChannelService
 	{
 		const channel_user = await this.findChannelUserByUser(channel, user.id);
 		// if not muted
-		if (!channel_user.muted)
+		if (channel_user.muted == null)
 			return (false);
 		else
 		{
