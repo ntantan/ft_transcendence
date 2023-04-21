@@ -150,12 +150,17 @@ export default defineComponent ({
                     <v-list>
                         <v-card v-for="user in this.room.user" :key="user">
                             {{ user.user }}
+                            <v-card-actions>
+                                <v-btn type="submit" block @click="this.muteUser()" color="primary">mute</v-btn>
+                                <v-btn type="submit" block @click="this.kickUser()" color="secondary">kick</v-btn>
+                                <v-btn type="submit" block @click="this.changeAdmin()" color="other">admin</v-btn>
+                                <v-btn type="submit" blocl @click="this.inviteGame()" color="primary">invite game</v-btn>>
+                            </v-card-actions>
                         </v-card>
                         <!-- <v-list-item v-for="item in channels"> -->
                     </v-list>
                 </v-card>
             </v-col>
-
         </v-row>
     </v-card>
 </template>
