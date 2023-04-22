@@ -27,7 +27,11 @@ export default defineComponent({
 	data() {
 		return {
 			gameStore,
-			chatStore
+			chatStore,
+
+			snackbar: false,
+			snackbar_text: 'My timeout is set to 2000.',
+			timeout: 3000,
 		};
 	},
 
@@ -39,9 +43,19 @@ export default defineComponent({
 	},
 
 	mounted() {
+
+		// Print an error notification
+			this.chatStore.socket.on('error', (response: any) => {
+			this.sendSnackbar(response.message);
+		})
 	},
 
 	methods: {
+		sendSnackbar(msg: string)
+		{
+			this.snackbar_text = msg;
+			this.snackbar = true;
+		},
 	}
 });
 </script>
@@ -52,6 +66,27 @@ export default defineComponent({
 			<banner-bar />
 			<router-view />
 			<nav-bar />
+
+			<!-- error bar -->
+			<div class="text-center">
+				<v-snackbar
+				v-model="snackbar"
+				:timeout="timeout"
+				>
+				{{ snackbar_text }}
+
+					<template v-slot:actions>
+						<v-btn
+						color="blue"
+						variant="text"
+						@click="snackbar = false"
+						>
+						Close
+						</v-btn>
+					</template>
+				</v-snackbar>
+			</div>
+
 		</v-main>
 	</v-app> 
 </template>

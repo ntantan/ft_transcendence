@@ -36,7 +36,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 
 		try { await this.channelService.createChannel(body.room_name, body.password, user, "public"); }
-		catch (error) { console.log(error); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 		this.server.emit('newRoom');
 		console.log("room " + body.room_name + " created");
     }
@@ -48,7 +51,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 		try { await this.channelService.addUser(body.id, user, body.password); }
-		catch (error) { console.log(error); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 	
 		this.chatService.joinRoom(client, body.id);
 	
@@ -75,10 +81,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 
 		try { await this.channelService.rmUser(body.id, user); }
-		catch (error) { console.log(error); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 		this.chatService.leaveRoom(client, body.id);
 
-		this.server.to("room-" + body.id).emit('updateRoom');
+		this.server.emit('updateRoom');
 	}
 
 	@SubscribeMessage('textMessage')
@@ -89,7 +98,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 
 		try { await this.channelService.newMessage(body.id, user, body.msg); } 
-		catch (error) { console.log(error); }
+		catch (error) { 
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 
 		this.server.emit('updateRoom');
 	}
@@ -102,9 +114,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 
 		try { await this.channelService.kickUser(user, body.id, body.user_id)}
-		catch (error) { console.log(error); }
+		catch (error) { 
+			// console.log(error); 
+			this.server.emit('error', error)
+		}
 
-		this.server.to("room-" + body.id).emit('updateRoom');
+		this.server.emit('updateRoom');
 	}
 
 	@SubscribeMessage('addAdmin')
@@ -115,10 +130,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 		
 		try { await this.channelService.addAdmin(user, body.id, body.user_id)}
-		catch (error) { console.log(error); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 
-		this.server.to("room-" + body.id).emit('updateRoom');
-		console.log("new admin")
+		this.server.emit('updateRoom');
 	}
 
 	@SubscribeMessage('rmAdmin')
@@ -129,9 +146,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 		
 		try { await this.channelService.rmAdmin(user, body.id, body.user_id)}
-		catch (error) { console.log(error); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 
-		this.server.to("room-" + body.id).emit('updateRoom');
+		this.server.emit('updateRoom');
 	}
 
 	@SubscribeMessage('addMute')
@@ -142,9 +162,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 		
 		try { await this.channelService.addMuted(user, body.id, body.user_id, 1)}
-		catch (error) { console.log(error); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 
-		this.server.to("room-" + body.id).emit('updateRoom');
+		this.server.emit('updateRoom');
 	}
 
 	@SubscribeMessage('rmMute')
@@ -155,8 +178,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			throw new UnauthorizedException('Jwt verification failed');
 		
 		try { await this.channelService.rmMuted(user, body.id, body.user_id)}
-		catch (error) { console.log(error); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
 
-		this.server.to("room-" + body.id).emit('updateRoom');
+		this.server.emit('updateRoom');
 	}
 }

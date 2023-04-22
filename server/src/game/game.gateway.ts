@@ -83,6 +83,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		return ({ player_side, roomName });
 	}
 
+	@SubscribeMessage('createCustom')
+	async createCustom(@ConnectedSocket() client: Socket, @MessageBody() data: any)
+	{
+		const user = await this.get_ws_user(client);
+		if (!user)
+			return;
+
+		
+	}
+
 	@SubscribeMessage('joinRoom')
 	async joinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: any)
 	{

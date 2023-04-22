@@ -4,6 +4,7 @@ import GameView from "../views/GameView.vue";
 import ChatView from "../views/ChatView.vue";
 import UserView from "../views/UserView.vue";
 import LoginView from "../views/LoginView.vue";
+import CustomGameView from "../views/CustomGameView.vue";
 import axios from "axios";
 import { userStore } from "@/stores/user";
 
@@ -26,6 +27,14 @@ const router = createRouter({
 		title: "Game"
 	  },
     },
+	{
+		path: "/game/custom",
+		name: "custom_game",
+		component: CustomGameView,
+		meta: {
+		  title: "Game"
+		},
+	  },
     {
       path: "/chat",
       name: "chat",

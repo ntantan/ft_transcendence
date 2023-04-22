@@ -81,8 +81,8 @@ export class ChannelService
 			password: password,
 			type: type,
 		});
-		const b = await this.channelRepository.save(newChannel);
-	
+		await this.channelRepository.save(newChannel);
+
 		const channel_user = this.channelUserRepository.create({
 			user: owner,
 			channel_owner: true,
@@ -91,7 +91,7 @@ export class ChannelService
 			muted: null,
 			channel: newChannel
 		});
-		const c = await this.channelUserRepository.save(channel_user);
+		await this.channelUserRepository.save(channel_user);
 		newChannel.channel_users = [channel_user];
 
 		const a = await this.channelRepository.save(newChannel);
@@ -101,7 +101,7 @@ export class ChannelService
 			date: new Date(),
 			channel: newChannel
 		});
-		const d = await this.messageRepository.save(newMessage);
+		await this.messageRepository.save(newMessage);
 		newChannel.messages = [newMessage];
 	
 		return (await this.channelRepository.save(newChannel));
@@ -133,7 +133,6 @@ export class ChannelService
 		// })
 		if (channel_user)
 			return (channel_user);
-		console.log(channel)
 		throw new NotFoundException("User " + user_id + " not found in this channel");
 	}
 
@@ -272,7 +271,7 @@ export class ChannelService
 		catch {
 			channel_user = this.channelUserRepository.create({
 				user: user,
-				channel_owner: true,
+				channel_owner: false,
 				admin: false,
 				banned: false,
 				muted: null,
@@ -296,10 +295,10 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
-	async kickUser(requester: User, channel_id: string, user: User)
+	async kickUser(requester: User, channel_id: string, user_id: number)
 	{
 		const channel = await this.findChannelById(channel_id);
-		const channel_user = await this.findChannelUserByUser(channel, user.id);
+		const channel_user = await this.findChannelUserByUser(channel, user_id);
 		const requester_channel_user = await this.findChannelUserByUser(channel, requester.id);
 
 		if (!requester_channel_user.admin && !requester_channel_user.channel_owner)

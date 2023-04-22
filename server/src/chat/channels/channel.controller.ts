@@ -109,7 +109,8 @@ export class ChannelController
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 
-		try {	
+		try {
+			// console.log(await this.channelService.getChannel(id, user));
 			return (await this.channelService.getChannel(id, user));
 		}
 		catch (error) {

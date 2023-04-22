@@ -103,7 +103,7 @@ export class GameService {
 		}
 
 		// If no waiting rooms found
-		var newRoom = this.createRoom(mod);
+		var newRoom = this.createRoom(mod, "public");
 		if (Math.random() > 0.5)
 			newRoom.player_1 = user.username;
 		else
@@ -145,11 +145,11 @@ export class GameService {
 		server.to(room.name).emit("endGame", { roomName: room.name, endStatus: room.end_status });
 	}
 
-	createRoom(mod: number)
+	createRoom(mod: number, type: string)
 	{
-		let roomName = "room" + Math.floor(Math.random() * 1000);	
+		let roomName = type + Math.floor(Math.random() * 1000);	
 		while (this.rooms.find((room) => room.name === roomName))
-			roomName = "room" + Math.floor(Math.random() * 1000);
+			roomName = type + Math.floor(Math.random() * 1000);
 
 		let newRoom = new Room;
 		if (mod == 0)

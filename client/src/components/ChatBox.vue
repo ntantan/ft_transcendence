@@ -23,6 +23,7 @@ export default defineComponent ({
             passWord: "",
             messageText: "",
 
+			roomPassword: "",
 			rules: [
 				value => {
 					if (value)
@@ -30,10 +31,6 @@ export default defineComponent ({
 					return ("Field can not be empty")
 				}
 			],
-
-			snackbar: false,
-			snackbar_text: 'My timeout is set to 2000.',
-			timeout: 2000,
         }
     },
 
@@ -49,11 +46,6 @@ export default defineComponent ({
 
 		this.socket.on('updateRoom', () => {
 			this.fetchRoom();
-		})
-
-		// Print an error notification
-		this.socket.on('error', (response: any) => {
-			this.sendSnackbar(response);
 		})
     },
 
@@ -79,7 +71,7 @@ export default defineComponent ({
             axios.get(CHANNELS_URL, {withCredentials: true})
             .then((response) => {
                 this.channels = response.data;
-				// console.log(response)
+				console.log(response)
             })
         },
 
@@ -112,7 +104,7 @@ export default defineComponent ({
 		joinRoom() {
 			this.socket.emit('joinRoom', {
 				id: this.selectedChannel,
-				password: "",
+				password: this.roomPassword,
 			})
 		},
 
@@ -167,12 +159,6 @@ export default defineComponent ({
         inviteGame() {
             console.log("inviteGame OK");
         },
-		
-		sendSnackbar(msg: string)
-		{
-			this.snackbar_text = msg;
-			this.snackbar = true;
-		},
 
 		mergeProps,
     },
@@ -199,7 +185,7 @@ export default defineComponent ({
 					</v-card>
 
 					<v-form @submit.prevent>
-						<v-text-field v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+						<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
 						<v-text-field v-model="this.passWord" label="Password"></v-text-field>
 						<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
 					</v-form>
@@ -213,21 +199,29 @@ export default defineComponent ({
 				<v-card class="h-options mx-auto">
 
 					<v-row v-if="!isJoined && selectedChannel">
-						<v-col>
+						<v-col class="ma-2" align-self="center" cols="5">
 							<v-card-title>{{ selectedRoomname }}</v-card-title>
 						</v-col>
-						<v-col class="mr-3" align-self="center" >
-							<v-btn width="200" color="primary" @click="joinRoom()">Join</v-btn>
+						<v-col class="mr-3"  cols="4" align-self="center">
+							<v-text-field
+								style="width: 200px;"
+								v-model="roomPassword"
+								label="Leave empty if not required"
+								variant="underlined">
+							</v-text-field>
+						</v-col>
+						<v-col align-self="center">
+							<v-btn width="100" color="primary" @click="joinRoom()">Join</v-btn>
 						</v-col>
 					</v-row>
 
 					<v-row  v-if="isJoined">
-						<v-col>
-							<v-card-title>{{ room.name }}</v-card-title>
+						<v-col class="ma-2" align-self="center" cols="9">
+							<v-card-title>{{ selectedRoomname }}</v-card-title>
 						</v-col>
 
 						<v-col align-self="center">
-							<v-btn width="200" color="primary" @click="leaveRoom()">Leave</v-btn>
+							<v-btn width="100" color="primary" @click="leaveRoom()">Leave</v-btn>
 						</v-col>
 					</v-row>
 
@@ -283,26 +277,6 @@ export default defineComponent ({
         </v-row>
     </v-card>
 
-	<!-- error bar -->
-	<div class="text-center">
-		<v-snackbar
-		v-model="snackbar"
-		:timeout="timeout"
-		>
-		{{ snackbar_text }}
-
-			<template v-slot:actions>
-				<v-btn
-				color="blue"
-				variant="text"
-				@click="snackbar = false"
-				>
-				Close
-				</v-btn>
-			</template>
-		</v-snackbar>
-	</div>
-
 </template>
 
 <style>
@@ -321,7 +295,11 @@ export default defineComponent ({
 }
 
 .h-options{
-	height: 50px;
+	height: 65px;
+}
+
+.h-sub-options{
+	height: 40px;
 }
 
 </style>

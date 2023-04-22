@@ -11,7 +11,7 @@ export class Channel {
     @Column()
     name: string;
 
-    @Column({nullable: true})
+    @Column({nullable: true, select: false})
     password: string;
 
 	// Can be "public", "private" with password, or "direct"
