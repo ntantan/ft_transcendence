@@ -79,8 +79,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		client.join(room.name);
 		this.gameService.startMatch(this.server, room);
 		const player_side = this.gameService.getPlayerSide(user.username, room.name);
-		const roomName = room.name;
-		return ({ player_side, roomName });
+		return ({ player_side: player_side, roomName: room.name });
 	}
 
 	@SubscribeMessage('createCustom')
@@ -90,7 +89,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 
-		
+		let room = this.gameService.createCustomRoom(client, this.server, data.mod, user);
+		client.join(room.name);
+		this.gameService.startMatch(this.server, room);
+		const player_side = this.gameService.getPlayerSide(user.username, room.name);
+		return ({ player_side: player_side, roomName: room.name });
 	}
 
 	@SubscribeMessage('joinRoom')
@@ -120,7 +123,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (roomName)
 		{
 			client.leave(roomName);
-			console.log(user.username, "left", roomName);
+			// console.log(user.username, "left", roomName);
 			this.server.to(roomName).emit("clear");
 		}
 	}
@@ -137,7 +140,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		{
 			this.gameService.leaveAllRoom(client, this.server, user.username);
 			client.join(roomName);
-			console.log(roomName, "new spec !");
+			// console.log(roomName, "new spec !");
 		}
 	}
 

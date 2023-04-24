@@ -261,7 +261,14 @@ export class ChannelService
 		const channel = await this.findChannelById(channel_id);
 		// const user = await this.usersService.findOne(user_id);
 
-		if (channel.password && channel.password !== password)
+		const ch_pass = await this.channelRepository.findOne({
+			where: [{id: Number(channel_id)}],
+			select: {
+				password: true,
+			}
+		})
+
+		if (ch_pass.password && ch_pass.password !== password)
 			throw new UnauthorizedException("Wrong Password");
 
 		let channel_user;

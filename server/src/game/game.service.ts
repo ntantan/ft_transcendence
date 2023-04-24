@@ -87,7 +87,10 @@ export class GameService {
 		{
 			for (var room of this.rooms)
 			{
-				if (room.name == "test room" || room.name == "ia room" || room.mod != mod.toString()) // Skip the test room, will be deleted later
+				if (room.name == "test room" 
+				|| room.name == "ia room" 
+				|| room.mod != mod.toString()
+				|| room.name.includes("custom")) // Skip the test room, will be deleted later
 					continue;
 				if (!room.player_1)
 				{
@@ -104,6 +107,18 @@ export class GameService {
 
 		// If no waiting rooms found
 		var newRoom = this.createRoom(mod, "public");
+		if (Math.random() > 0.5)
+			newRoom.player_1 = user.username;
+		else
+			newRoom.player_2 = user.username;
+		return (newRoom);
+	}
+
+	createCustomRoom(client: Socket, server: Server, mod: number, user: User)
+	{
+		this.leaveAllRoom(client, server, user.username);
+
+		var newRoom = this.createRoom(mod, "custom");
 		if (Math.random() > 0.5)
 			newRoom.player_1 = user.username;
 		else
