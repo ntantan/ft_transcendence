@@ -12,7 +12,9 @@ import { Player } from './objects/Player';
 @Injectable()
 export class GameService {
 
-	constructor(private readonly historyService: HistoryService, private readonly schedulerRegistry: SchedulerRegistry) {}
+	constructor(private readonly historyService: HistoryService, 
+				private readonly schedulerRegistry: SchedulerRegistry,
+				) {}
 
 	//		CONTROLLER		//
 	findAllGame()
@@ -24,31 +26,42 @@ export class GameService {
 
 	private player: Player[] = [
 		{
-			username: "test",
+			id: "test",
 			socket_id: "test"
 		}
 	];
 
-	player_join(username: string, socket_id: string, client: Socket)
+	player_join(id: string, socket_id: string, client: Socket)
 	{
-		const find = this.player.find((player) => player.username == username);
+		const find = this.player.find((player) => player.id == id);
 
 		if (!find)
 		{
-			console.log(username, "connected to game socket");
-			return (this.player.push({username, socket_id}));
+			console.log(client.id, id, "connected to game socket");
+			return (this.player.push({id, socket_id}));
 		}
-		console.log(username, "already connected to game socket");
+		console.log(id, "already connected to game socket");
 		client.disconnect();
 		return (null);
 	}
 
-	player_leave(username: string, socket_id: string)
+	player_leave(id: string, socket_id: string)
 	{
-		const find = this.player.find((player) => player.username == username && player.socket_id == socket_id);
+		const find = this.player.find((player) => player.id == id && player.socket_id == socket_id);
 
 		if (find)
 			this.player.splice((this.player.indexOf(find)), 1);
+	}
+
+	send_invitation(server: Server, id: string, room_name: string, user: User)
+	{
+		const find = this.player.find((player) => player.id == id);
+		if (!find)
+			return;
+		console.log(find.socket_id)
+		// cannot send to itself
+		// server.to(find.socket_id).emit('gameInvite', {room_name: room_name});
+		server.emit('gameInvite', {room_name: room_name, inviter: user.username});
 	}
 
 	//		ROOMS		//
@@ -80,7 +93,7 @@ export class GameService {
 
 	joinQueue(client: Socket, server: Server, mod: number, user: User)
 	{
-		this.leaveAllRoom(client, server, user.username);
+		this.leaveAllRoom(client, server, String(user.id));
 
 		// Search for a waiting room
 		if (this.rooms.length > 0)
@@ -94,12 +107,12 @@ export class GameService {
 					continue;
 				if (!room.player_1)
 				{
-					room.player_1 = user.username;
+					room.player_1 = String(user.id);
 					return (room);
 				}
 				else if (!room.player_2)
 				{
-					room.player_2 = user.username;
+					room.player_2 = String(user.id);
 					return (room);
 				}
 			}
@@ -108,9 +121,9 @@ export class GameService {
 		// If no waiting rooms found
 		var newRoom = this.createRoom(mod, "public");
 		if (Math.random() > 0.5)
-			newRoom.player_1 = user.username;
+			newRoom.player_1 = String(user.id);
 		else
-			newRoom.player_2 = user.username;
+			newRoom.player_2 = String(user.id);
 		return (newRoom);
 	}
 
@@ -120,9 +133,9 @@ export class GameService {
 
 		var newRoom = this.createRoom(mod, "custom");
 		if (Math.random() > 0.5)
-			newRoom.player_1 = user.username;
+			newRoom.player_1 = String(user.id);
 		else
-			newRoom.player_2 = user.username;
+			newRoom.player_2 = String(user.id);
 		return (newRoom);
 	}
 
@@ -251,7 +264,11 @@ export class GameService {
 		if (!find)
 			return (null);
 
-		if (!find.player_1)
+		if (find.player_1 == clientId || find.player_2 == clientId)
+		{
+			console.log(clientId, "already in the room", roomName);
+		}
+		else if (!find.player_1)
 		{
 			console.log(clientId, "in slot 1 of", roomName);
 			find.player_1 = clientId;
@@ -268,7 +285,8 @@ export class GameService {
 		}
 
 		if (find.player_1 && find.player_2)
-			this.createInterval(server, find, find.name);
+			this.startMatch(server, find);
+			// this.createInterval(server, find, find.name);
 		return (find.name);
 	}
 

@@ -63,11 +63,13 @@ export default defineComponent({
 			// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
 			this.gameStore.socket.emit("createCustom", { 
 				mod: this.model,
+				invite_id: this.gameStore.invitedUser.id,
 			}, 
 			(response) => {
 				this.gameStore.inGame = response.player_side;
 				if (this.gameStore.inGame)
 					this.gameStore.currentRoom = response.roomName;
+				console.log(response)
 			});
 			router.push({path: '/game'});
 			// this.gameStore.currentRoom = this.rooms.find((room) => room.name === roomName);
