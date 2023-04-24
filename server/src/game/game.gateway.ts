@@ -50,7 +50,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		const user = await this.get_ws_user(client);
 		if (!user)
 			return;
-		return (this.gameService.player_join(user.username, client.id, client));
+		return (this.gameService.player_join(String(user.id), client.id, client));
 	}
 	
 	async handleDisconnect(@ConnectedSocket() client: Socket) {
@@ -58,9 +58,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 
-		this.gameService.leaveAllRoom(client, this.server, user.username);
+		this.gameService.leaveAllRoom(client, this.server, String(user.id));
 		client._cleanup();
-		this.gameService.player_leave(user.username, client.id);
+		this.gameService.player_leave(String(user.id), client.id);
 		console.log(client.id, "disconnected");
 	}
 	
@@ -78,9 +78,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		const room = await this.gameService.joinQueue(client, this.server, data.mod, user);
 		client.join(room.name);
 		this.gameService.startMatch(this.server, room);
-		const player_side = this.gameService.getPlayerSide(user.username, room.name);
-		const roomName = room.name;
-		return ({ player_side, roomName });
+		const player_side = this.gameService.getPlayerSide(String(user.id), room.name);
+		return ({ player_side: player_side, roomName: room.name });
 	}
 
 	@SubscribeMessage('createCustom')
@@ -90,7 +89,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 
-		
+		let room = this.gameService.createCustomRoom(client, this.server, data.mod, user);
+		client.join(room.name);
+		this.gameService.startMatch(this.server, room);
+		const player_side = this.gameService.getPlayerSide(String(user.id), room.name);
+		this.gameService.send_invitation(this.server, data.invite_id, room.name, user);
+		return ({ player_side: player_side, roomName: room.name });
 	}
 
 	@SubscribeMessage('joinRoom')
@@ -100,13 +104,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 		
-		const roomName = this.gameService.joinRoom(data.roomName, user.username, this.server);
+		const roomName = this.gameService.joinRoom(data.roomName, String(user.id), this.server);
 		if (roomName)
 		{
-			this.gameService.leaveAllRoom(client, this.server, user.username);
+			this.gameService.leaveAllRoom(client, this.server, String(user.id));
 			client.join(roomName);
 		}
-		return (this.gameService.getPlayerSide(user.username, roomName))
+		const player_side = this.gameService.getPlayerSide(String(user.id), roomName);
+		return ({ player_side: player_side, roomName: roomName });
 	}
 
 	@SubscribeMessage('leaveRoom')
@@ -116,11 +121,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 	
-		const roomName = this.gameService.leaveRoom(data.roomName, user.username);
+		const roomName = this.gameService.leaveRoom(data.roomName, String(user.id));
 		if (roomName)
 		{
 			client.leave(roomName);
-			console.log(user.username, "left", roomName);
+			// console.log(user.username, "left", roomName);
 			this.server.to(roomName).emit("clear");
 		}
 	}
@@ -135,9 +140,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		const roomName = this.gameService.spectateRoom(data.roomName, client.id);
 		if (roomName)
 		{
-			this.gameService.leaveAllRoom(client, this.server, user.username);
+			this.gameService.leaveAllRoom(client, this.server, String(user.id));
 			client.join(roomName);
-			console.log(roomName, "new spec !");
+			// console.log(roomName, "new spec !");
 		}
 	}
 
@@ -148,7 +153,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 		
-		this.gameService.move(data.roomName, data.direction, client.rooms, user.username);
+		this.gameService.move(data.roomName, data.direction, client.rooms, String(user.id));
 	}
 
 	@SubscribeMessage('test')

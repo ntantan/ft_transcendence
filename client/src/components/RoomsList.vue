@@ -54,17 +54,15 @@ export default defineComponent({
 			});
 		},
 
-		joinRoom(roomName: string)
-		{
-			// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
-			this.gameStore.socket.emit("joinRoom", { roomName }, (response) => {
-				this.gameStore.inGame = response;
-				if (this.gameStore.inGame)
-					this.gameStore.currentRoom = roomName;
-			});
-
-				// this.gameStore.currentRoom = this.rooms.find((room) => room.name === roomName);
-		},
+		// joinRoom(roomName: string)
+		// {
+		// 	// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
+		// 	this.gameStore.socket.emit("joinRoom", { roomName }, (response) => {
+		// 		this.gameStore.inGame = response.player_side;
+		// 		if (this.gameStore.inGame)
+		// 			this.gameStore.currentRoom = response.roomName;
+		// 	});
+		// },
 
 		leaveRoom(roomName: string)
 		{

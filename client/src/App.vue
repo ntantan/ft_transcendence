@@ -7,6 +7,7 @@ import NavBar from "./components/NavBar.vue";
 
 import { gameStore } from "./stores/game";
 import { chatStore } from "./stores/chat";
+import router from "./router";
 
 export default defineComponent({
 	name: "App",
@@ -32,6 +33,12 @@ export default defineComponent({
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
 			timeout: 3000,
+
+			invitebar: false,
+			invitebar_text: '',
+			invitebar_timeout: 5000,
+			invite_room: "",
+			invite_player: "",
 		};
 	},
 
@@ -45,8 +52,14 @@ export default defineComponent({
 	mounted() {
 
 		// Print an error notification
-			this.chatStore.socket.on('error', (response: any) => {
+		this.chatStore.socket.on('error', (response) => {
 			this.sendSnackbar(response.message);
+		});
+
+		this.gameStore.socket.on('gameInvite', (response) => {
+			this.sendInviteBar("You received an invitation to play from " + response.inviter);
+			this.invite_room = response.room_name;
+			this.invite_player = response.inviter;
 		})
 	},
 
@@ -55,6 +68,22 @@ export default defineComponent({
 		{
 			this.snackbar_text = msg;
 			this.snackbar = true;
+		},
+
+		sendInviteBar(msg: string)
+		{
+			this.invitebar_text = msg;
+			this.invitebar = true;
+		},
+
+		acceptInvite()
+		{		
+			this.gameStore.socket.emit("joinRoom", { roomName: this.invite_room }, (response) => {
+				this.gameStore.inGame = response.player_side;
+				if (this.gameStore.inGame)
+					this.gameStore.currentRoom = response.roomName;
+			});
+			router.push('/game');
 		},
 	}
 });
@@ -74,7 +103,6 @@ export default defineComponent({
 				:timeout="timeout"
 				>
 				{{ snackbar_text }}
-
 					<template v-slot:actions>
 						<v-btn
 						color="blue"
@@ -85,6 +113,26 @@ export default defineComponent({
 						</v-btn>
 					</template>
 				</v-snackbar>
+			</div>
+
+			<!-- invite bar -->
+			<div class="text-center">
+			<v-snackbar
+			v-model="invitebar"
+			:timeout="invitebar_timeout"
+			top
+			>
+			{{ invitebar_text }}
+				<template v-slot:actions>
+					<v-btn
+					color="blue"
+					variant="text"
+					@click="invitebar = false; acceptInvite()"
+					>
+					Play
+					</v-btn>
+				</template>
+			</v-snackbar>
 			</div>
 
 		</v-main>

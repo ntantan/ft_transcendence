@@ -28,6 +28,6 @@ export default defineComponent({
 </script>
 
 <template>
-	<PongGame v-if="this.gameStore.inGame > 0" />
+	<!-- <PongGame v-if="this.gameStore.inGame > 0" /> -->
 	<CustomGame />
 </template>

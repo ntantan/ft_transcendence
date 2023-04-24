@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { gameStore } from "../stores/game"
+import router from "@/router";
 
 export default defineComponent({
 

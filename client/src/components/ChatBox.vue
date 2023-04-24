@@ -4,7 +4,9 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
+import { gameStore } from "@/stores/game"
 import { mergeProps } from "vue";
+import router from "@/router";
 
 const CHANNELS_URL = "http://localhost:3000/channels/";
 
@@ -12,25 +14,30 @@ export default defineComponent ({
     data() {
         return {
             chatStore,
+			gameStore,
             socket: {},
 			isJoined: false,
             room: {},
-
+			
             channels: [],
-
+			
             selectedChannel: "",
             roomName: "",
             passWord: "",
             messageText: "",
-
+			
 			roomPassword: "",
 			rules: [
 				value => {
 					if (value)
-						return (true)
+					return (true)
 					return ("Field can not be empty")
 				}
 			],
+
+			snackbar: false,
+			snackbar_text: 'My timeout is set to 2000.',
+			timeout: 3000,
         }
     },
 
@@ -71,7 +78,7 @@ export default defineComponent ({
             axios.get(CHANNELS_URL, {withCredentials: true})
             .then((response) => {
                 this.channels = response.data;
-				console.log(response)
+				// console.log(response)
             })
         },
 
@@ -156,9 +163,17 @@ export default defineComponent ({
 								user_id: channel_user.user.id})
 		},
 
-        inviteGame() {
+        inviteGame(channel_user: any) {
+			this.gameStore.invitedUser = channel_user.user;
+			router.push({ path: '/game/custom' });
             console.log("inviteGame OK");
         },
+
+		sendSnackbar(msg: string)
+		{
+			this.snackbar_text = msg;
+			this.snackbar = true;
+		},
 
 		mergeProps,
     },
@@ -207,7 +222,8 @@ export default defineComponent ({
 								style="width: 200px;"
 								v-model="roomPassword"
 								label="Leave empty if not required"
-								variant="underlined">
+								variant="underlined"
+								clearable>
 							</v-text-field>
 						</v-col>
 						<v-col align-self="center">
@@ -268,7 +284,7 @@ export default defineComponent ({
 							</v-list-item-title>
                         </v-list-item>
                         <v-list-item>
-                            <v-list-item-title><v-btn type="submit" block @click="this.inviteGame()" color="primary">invite game</v-btn></v-list-item-title>
+                            <v-list-item-title><v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn></v-list-item-title>
                         </v-list-item>
                     </v-list>
                     </v-menu>
@@ -277,6 +293,26 @@ export default defineComponent ({
         </v-row>
     </v-card>
 
+
+	<!-- error bar -->
+	<div class="text-center">
+		<v-snackbar
+		v-model="snackbar"
+		:timeout="timeout"
+		>
+		{{ snackbar_text }}
+
+			<template v-slot:actions>
+				<v-btn
+				color="blue"
+				variant="text"
+				@click="snackbar = false"
+				>
+				Close
+				</v-btn>
+			</template>
+		</v-snackbar>
+	</div>
 </template>
 
 <style>

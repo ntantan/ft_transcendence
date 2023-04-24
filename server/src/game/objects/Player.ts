@@ -1,11 +1,11 @@
 export class Player 
 {
-	username: string;
+	id: string;
 	socket_id: string;
 
 	constructor()
 	{
-		this.username = "";
+		this.id = "";
 		this.socket_id = "";
 	}
 }

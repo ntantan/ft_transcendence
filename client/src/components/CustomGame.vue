@@ -5,6 +5,7 @@ import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
 import gamemod0 from "@/assets/screenshot_gamemod0.png";
+import router from "@/router";
 
 export default defineComponent({
 
@@ -16,6 +17,7 @@ export default defineComponent({
 			rooms: [],
 			gameStore,
 			model: 1,
+			opponentImage: gameStore.invitedUser.avatar,
 		};
 	},
 
@@ -24,8 +26,6 @@ export default defineComponent({
 	},
 
 	mounted() {
-		this.getRooms();
-
 		this.gameStore.socket.on("endGame", (data) => {
 			const roomName = data.roomName;
 			this.gameStore.socket.emit("leaveRoom", { roomName });
@@ -34,33 +34,45 @@ export default defineComponent({
 	},
 
 	methods: {
-		test() 
-		{
-			this.gameStore.socket.emit("test");
-		},
+		// joinQueue()
+		// {
+		// 	this.gameStore.socket.emit("joinQueue", { mod: this.model },(response) => {
+		// 		this.gameStore.inGame = response.player_side;
+		// 		if (this.gameStore.inGame)
+		// 			this.gameStore.currentRoom = response.roomName;
+		// 	});
+		// },
 
-		joinQueue()
+		// joinRoom(roomName: string)
+		// {
+		// 	// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
+		// 	this.gameStore.socket.emit("joinRoom", { 
+		// 		roomName: roomName,
+		// 	}, 
+		// 	(response) => {
+		// 		this.gameStore.inGame = response;
+		// 		if (this.gameStore.inGame)
+		// 			this.gameStore.currentRoom = roomName;
+		// 	});
+
+		// 	// this.gameStore.currentRoom = this.rooms.find((room) => room.name === roomName);
+		// },
+
+		startMatch()
 		{
-			this.gameStore.socket.emit("joinQueue", { mod: this.model },(response) => {
+			// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
+			this.gameStore.socket.emit("createCustom", { 
+				mod: this.model,
+				invite_id: this.gameStore.invitedUser.id,
+			}, 
+			(response) => {
 				this.gameStore.inGame = response.player_side;
 				if (this.gameStore.inGame)
 					this.gameStore.currentRoom = response.roomName;
+				console.log(response)
 			});
-		},
-
-		joinRoom(roomName: string)
-		{
-			// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
-			this.gameStore.socket.emit("joinRoom", { 
-				roomName: roomName,
-			}, 
-			(response) => {
-				this.gameStore.inGame = response;
-				if (this.gameStore.inGame)
-					this.gameStore.currentRoom = roomName;
-			});
-
-				// this.gameStore.currentRoom = this.rooms.find((room) => room.name === roomName);
+			router.push({path: '/game'});
+			// this.gameStore.currentRoom = this.rooms.find((room) => room.name === roomName);
 		},
 
 		leaveRoom(roomName: string)
@@ -68,6 +80,7 @@ export default defineComponent({
 			this.gameStore.socket.emit("leaveRoom", { roomName });
 			this.gameStore.currentRoom = null;
 			this.gameStore.inGame = 0;
+			router.push({ path: '/chat' });
 		},
 
 		spectateRoom(roomName: string)
@@ -133,7 +146,7 @@ export default defineComponent({
 		<v-btn 
 			class="d-flex alight-center justify-center mx-auto ma-4"
 			color="primary"
-			v-if="!this.gameStore.inGame" v-on:click="joinQueue()"
+			v-if="!this.gameStore.inGame" v-on:click="startMatch()"
 			>Start Match</v-btn>
 		
     </v-card>
@@ -144,6 +157,26 @@ export default defineComponent({
 				v-if="this.gameStore.inGame" v-on:click="leaveRoom(this.gameStore.currentRoom)"
 				>Leave</v-btn>
 		</v-col>
+	</v-row>
+
+	<v-row justify="center">
+		<v-card>
+			<v-card-title class="d-flex justify-center" >Your opponent</v-card-title>
+			<v-col class="d-flex justify-center">
+				<v-avatar size="100">
+					<v-img v-bind:src="opponentImage"></v-img>
+				</v-avatar>
+			</v-col>
+			<v-col cols="auto" class="d-flex justify-center">
+				<v-card-subtitle>{{ this.gameStore.invitedUser.username }}</v-card-subtitle>
+			</v-col>
+			<v-card-title class="d-flex justify-center">
+				Level
+			</v-card-title>
+			<v-col cols="auto" class="d-flex justify-center">
+				<v-card-subtitle>{{ this.gameStore.invitedUser.level }}</v-card-subtitle>
+			</v-col>
+		</v-card>
 	</v-row>
 
 </template>
