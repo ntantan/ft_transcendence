@@ -19,38 +19,35 @@ export class ChatService {
 		win: 0,
 		lose: 0,
 		two_fa: false,
+		secret: "",
 		friends: null,
 		blocked: [],
 	};
 
-    constructor(
+	constructor(
 		private readonly channelService: ChannelService,
 		private readonly authService: AuthService
-    ) {}
+	) { }
 
-	parseCookie(str: string)
-	{
+	parseCookie(str: string) {
 		return str
-		.split(';')
-		.map(v => v.split('='))
-		.reduce((acc, v) => {
-			acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
-			return acc;
-		}, {});
+			.split(';')
+			.map(v => v.split('='))
+			.reduce((acc, v) => {
+				acc[decodeURIComponent(v[0].trim())] = decodeURIComponent(v[1].trim());
+				return acc;
+			}, {});
 	}
 
-	async get_ws_user(client: Socket)
-	{
-		if (!client.handshake.headers.cookie)
-		{
+	async get_ws_user(client: Socket) {
+		if (!client.handshake.headers.cookie) {
 			console.log('no jwt provided');
 			client.disconnect();
 			return (null);
 		}
 		var jwt = this.parseCookie(client.handshake.headers.cookie)['jwt'];
 		const user = await this.authService.verifyJwt(jwt) || null;
-		if (!user)
-		{
+		if (!user) {
 			console.log('no user found with jwt');
 			client.disconnect();
 			return (null);
@@ -58,15 +55,13 @@ export class ChatService {
 		return (user);
 	}
 
-	joinRoom(client: Socket, channel_id: string)
-	{
+	joinRoom(client: Socket, channel_id: string) {
 		client.rooms.forEach((room) => client.leave(room));
 		client.join("room-" + channel_id);
 		// console.log(client.id, "has joined room-" + channel_id);
 	}
 
-	leaveRoom(client: Socket, channel_id: string)
-	{
+	leaveRoom(client: Socket, channel_id: string) {
 		client.leave("room-" + channel_id);
 		// console.log(client.id, "has left room-", channel_id);
 	}

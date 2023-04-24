@@ -9,7 +9,7 @@ export class CreateUserDto {
     @IsString()
     readonly username: string;
 
-    @IsNotEmpty()    
+    @IsNotEmpty()
     @IsString()
     readonly authToken: string;
 
@@ -31,6 +31,9 @@ export class CreateUserDto {
 
     @IsNotEmpty()
     readonly two_fa: boolean;
+
+    @IsNotEmpty()
+    readonly secret: string;
 
     @IsNotEmpty()
     readonly friends: Friend[];

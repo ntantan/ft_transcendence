@@ -24,7 +24,7 @@ export class UsersService {
         @InjectRepository(Blocked)
         private readonly blockedRepository: Repository<Blocked>,
         private readonly connection: DataSource,
-    ) {}
+    ) { }
 
     findAll(paginationQuery: PaginationQueryDto) {
         return this.userRepository.find({
@@ -34,7 +34,7 @@ export class UsersService {
 
     async findOne(id: number) {
         const user = await this.userRepository.findOne({
-            where: [ {id : id } ],
+            where: [{ id: id }],
             relations: ['friends', 'blocked'],
         });
         if (!user) {
@@ -43,9 +43,9 @@ export class UsersService {
         return user;
     }
 
-    async create(createUserDto: CreateUserDto) : Promise<User> {
+    async create(createUserDto: CreateUserDto): Promise<User> {
         const friends = await Promise.all(
-          createUserDto.friends.map(friend => this.preloadFriend(friend)),  
+            createUserDto.friends.map(friend => this.preloadFriend(friend)),
         );
         const blocked = await Promise.all(
             createUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
@@ -58,15 +58,15 @@ export class UsersService {
         return this.userRepository.save(user);
     }
 
-    async update(id: number, updateUserDto: UpdateUserDto) : Promise<User> {
+    async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
         const friends = updateUserDto.friends &&
-        (await Promise.all(
-            updateUserDto.friends.map(friend => this.preloadFriend(friend)),
-        ));
+            (await Promise.all(
+                updateUserDto.friends.map(friend => this.preloadFriend(friend)),
+            ));
         const blocked = updateUserDto.blocked &&
-        (await Promise.all(
-            updateUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
-        ));
+            (await Promise.all(
+                updateUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
+            ));
         const user = await this.userRepository.preload({
             //username: (await this.findOne(id)).username,
             id: id,
@@ -91,19 +91,19 @@ export class UsersService {
         return await this.userRepository.save(user);
     }
 
-    async getAvatar(avatar: string) : Promise<StreamableFile> {
+    async getAvatar(avatar: string): Promise<StreamableFile> {
         const file = await createReadStream(join(process.cwd(), "public", avatar));
         return new StreamableFile(file);
     }
 
-    async addFriend(id: number, friendId: number) : Promise<User> {
+    async addFriend(id: number, friendId: number): Promise<User> {
         const user = await this.findOne(id);
         const friendAsUser = await this.findOne(friendId);
-  
+
         if (!user || !friendAsUser) {
             throw new NotFoundException(`User(s) not found`);
         }
-        let friend = await this.friendRepository.findOne({ where: [{userId:friendId}]});
+        let friend = await this.friendRepository.findOne({ where: [{ userId: friendId }] });
         if (!friend) {
             friend = new Friend();
             friend.userId = friendAsUser.id;
@@ -112,19 +112,19 @@ export class UsersService {
         user.friends.push(friend);
         return await this.userRepository.save(user);
     }
-    
-    async blockUser(id: number, friendId: number) : Promise<User> {
+
+    async blockUser(id: number, friendId: number): Promise<User> {
         const user = await this.findOne(id);
         const blockedAsUser = await this.findOne(friendId);
-  
+
         if (!user || !blockedAsUser) {
             throw new NotFoundException(`User(s) not found`);
         }
-        const friend = await this.friendRepository.findOne({ where: [{userId:friendId}]});
+        const friend = await this.friendRepository.findOne({ where: [{ userId: friendId }] });
         if (friend) {
             user.friends = user.friends.filter(friend => friend.userId !== friendId);
         }
-        let blocked = await this.blockedRepository.findOne({ where: [{userId:friendId}]});
+        let blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
         if (!blocked) {
             blocked = new Blocked();
             blocked.userId = blockedAsUser.id;
@@ -133,7 +133,7 @@ export class UsersService {
         user.blocked.push(blocked);
         return await this.userRepository.save(user);
     }
-    
+
     async remove(id: number) {
         const user = await this.findOne(id);
         return this.userRepository.remove(user);
@@ -188,7 +188,7 @@ export class UsersService {
     }
 
     private async preloadFriend(friend: Friend): Promise<Friend> {
-        const existingFriend = await this.friendRepository.findOne({ where: [{userId:friend.userId}]});
+        const existingFriend = await this.friendRepository.findOne({ where: [{ userId: friend.userId }] });
         if (existingFriend) {
             return existingFriend;
         }
@@ -196,20 +196,20 @@ export class UsersService {
     }
 
     private async preloadBlocked(blocked: Blocked): Promise<Blocked> {
-        const existingBlocked = await this.blockedRepository.findOne({ where: [{userId:blocked.userId}]});
+        const existingBlocked = await this.blockedRepository.findOne({ where: [{ userId: blocked.userId }] });
         if (existingBlocked) {
             return existingBlocked;
         }
         return this.blockedRepository.create({ ...blocked, });
     }
 
-    async saveUserInfo(token : string, info : { login: string, imgUrl: string}) : Promise<User> {
+    async saveUserInfo(token: string, info: { login: string, imgUrl: string }): Promise<User> {
         const user = await this.userRepository.findOne({
-            where: [ {username : info.login } ],
+            where: [{ username: info.login }],
             relations: ['friends'],
         });
         if (!user) {
-            const createUserDto : CreateUserDto = {
+            const createUserDto: CreateUserDto = {
                 username: info.login,
                 authToken: token,
                 avatar: info.imgUrl,
@@ -218,6 +218,7 @@ export class UsersService {
                 win: 0,
                 lose: 0,
                 two_fa: false,
+                secret: "",
                 friends: [],
                 blocked: [],
             };
@@ -225,4 +226,4 @@ export class UsersService {
         }
         return user;
     }
- }
+}

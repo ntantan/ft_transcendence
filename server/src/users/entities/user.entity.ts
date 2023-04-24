@@ -31,6 +31,9 @@ export class User {
 
     @Column({ default: false })
     two_fa: boolean;
+    
+    @Column({ default: "" })
+    secret: string;
 
     @JoinTable()
     @ManyToMany(
