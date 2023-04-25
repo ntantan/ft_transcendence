@@ -1,135 +1,101 @@
 <template>
-  <v-container>
-    <v-row class="text-center">
-      <v-col cols="12">
-        <v-img :src="logo" class="my-3" contain height="200" />
-      </v-col>
+  <div class="home">
+    <header>
+      <h1>Pong en ligne</h1>
+      <p>Rejoignez la compétition et affrontez d'autres joueurs en temps réel !</p>
+    </header>
 
-      <v-col class="mb-4">
-        <h1 class="display-2 font-weight-bold mb-3">
-          Welcome to Vuetify 3 Beta
-        </h1>
-
-        <h4>Vite Preview</h4>
-
-        <p class="subheading font-weight-regular">
-          For help and collaboration with other Vuetify developers,
-          <br />please join our online
-          <a href="https://community.vuetifyjs.com" target="_blank"
-            >Discord Community</a
-          >
-        </p>
-      </v-col>
-
-      <v-col class="mb-5" cols="12">
-        <h2 class="headline font-weight-bold mb-5">What's next?</h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(next, i) in whatsNext"
-            :key="i"
-            :href="next.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ next.text }}
+    <section class="technologies">
+      <h2>Technologies utilisées</h2>
+      <div class="tech-container">
+        <div class="tech">
+          <a href="https://nestjs.com/" target="_blank" rel="noopener noreferrer">
+            <img src="https://nestjs.com/img/logo_text.svg" alt="NestJS" />
           </a>
-        </v-row>
-      </v-col>
-
-      <v-col class="mb-5" cols="12">
-        <h2 class="headline font-weight-bold mb-5">Important Links</h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(link, i) in importantLinks"
-            :key="i"
-            :href="link.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ link.text }}
+          <p>NestJS pour le backend</p>
+        </div>
+        <div class="tech">
+          <a href="https://vuejs.org/" target="_blank" rel="noopener noreferrer">
+            <img src="https://vuejs.org/images/logo.png" alt="Vue.js" />
           </a>
-        </v-row>
-      </v-col>
-
-      <v-col class="mb-5" cols="12">
-        <h2 class="headline font-weight-bold mb-5">Ecosystem</h2>
-
-        <v-row justify="center">
-          <a
-            v-for="(eco, i) in ecosystem"
-            :key="i"
-            :href="eco.href"
-            class="subheading mx-3"
-            target="_blank"
-          >
-            {{ eco.text }}
+          <p>Vue.js pour le frontend</p>
+        </div>
+        <div class="tech">
+          <a href="https://www.postgresql.org/" target="_blank" rel="noopener noreferrer">
+            <img src="https://www.postgresql.org/media/img/about/press/elephant.png" alt="PostgreSQL" />
           </a>
-        </v-row>
-      </v-col>
-    </v-row>
-  </v-container>
+          <p>PostgreSQL pour la base de données</p>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+  import axios from 'axios';
 
-import logo from "../assets/logo.svg";
-
-export default defineComponent({
-  //   name: "HelloWorld",
-
-  data() {
-    return {
-      ecosystem: [
-        {
-          text: "vuetify-loader",
-          href: "https://github.com/vuetifyjs/vuetify-loader/tree/next",
-        },
-        {
-          text: "github",
-          href: "https://github.com/vuetifyjs/vuetify/tree/next",
-        },
-        {
-          text: "awesome-vuetify",
-          href: "https://github.com/vuetifyjs/awesome-vuetify",
-        },
-      ],
-      importantLinks: [
-        {
-          text: "Chat",
-          href: "https://community.vuetifyjs.com",
-        },
-        {
-          text: "Made with Vuetify",
-          href: "https://madewithvuejs.com/vuetify",
-        },
-        {
-          text: "Twitter",
-          href: "https://twitter.com/vuetifyjs",
-        },
-        {
-          text: "Articles",
-          href: "https://medium.com/vuetify",
-        },
-      ],
-      logo,
-      whatsNext: [
-        {
-          text: "Explore components",
-          href: "https://vuetifyjs.com",
-        },
-        {
-          text: "Roadmap",
-          href: "https://vuetifyjs.com/en/introduction/roadmap/",
-        },
-        {
-          text: "Frequently Asked Questions",
-          href: "https://vuetifyjs.com/getting-started/frequently-asked-questions",
-        },
-      ],
-    };
-  },
-});
+  export default {
+    name: 'HomePage',
+    data() {
+      return {
+        bestPlayer: null,
+      };
+    },
+    async mounted() {
+      try {
+        const response = await axios.get(); // Remplacez ceci par l'URL de votre API
+        this.bestPlayer = response.data;
+      } catch (error) {
+        console.error('Erreur lors de la récupération du meilleur joueur:', error);
+      }
+    },
+  };
 </script>
+
+<style scoped>
+.home {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  margin-top: 100px;
+}
+
+h1 {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 24px;
+  color: #777;
+  margin-bottom: 40px;
+}
+
+.technologies {
+  margin-top: 60px;
+}
+
+.tech-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tech {
+  flex: 0 0 calc(33.333% - 40px);
+  margin: 20px;
+}
+
+.tech img {
+  width: 150px;
+  height: auto;
+}
+
+.tech p {
+  font-size: 18px;
+  color: #333;
+  margin-top: 10px;
+}
+</style>
