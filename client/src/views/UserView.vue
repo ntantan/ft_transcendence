@@ -107,7 +107,7 @@ export default defineComponent({
 </template>
 
 <style>
-  /* .main {
-    height : 500px;
-  } */
+  .main {
+    height : 800px;
+  }
 </style>

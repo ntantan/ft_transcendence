@@ -2,7 +2,6 @@
 import { defineComponent } from "vue";
 import { userStore } from "@/stores/user";
 import QRCode from "qrcode";
-import { authenticator } from "otplib";
 
 export default defineComponent({
 	name: "TwoFactorAuth",
@@ -13,18 +12,23 @@ export default defineComponent({
 			enable: userStore.user.two_fa,
 			secret: "",
 			userQRCode: "",
+			dialog: false,
+			isValid: false,
+			code: "",
+			rules: [
+				(v: string) => !!v || "Required",
+				(v: string) => v.length === 6 || "Must be 6 digits",
+			],
 		};
 	},
 	watch: {
 		enable: async function (newValue, oldValue) {
-			if (newValue !== oldValue) {
+			if (newValue === true) {
+				await this.onEnableTwoFa();
+			} else {
+				this.secret = "";
+				this.userQRCode = "";
 				await this.updateTwoFa(newValue);
-				if (newValue === true) {
-					await this.onEnableTwoFa();
-				} else {
-					this.secret = "";
-					this.userQRCode = "";
-				}
 			}
 		},
 	},
@@ -53,20 +57,19 @@ export default defineComponent({
 		},
 		async generateSecret(): Promise<string> {
 			// TODO: generate, save the secret key in the database and return it
-			const secret = authenticator.generateSecret();
-			const res = await fetch("http://localhost:3000/users/" + userStore.user.id, {
-				method: "PATCH",
+			const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/2faSecret", {
+				method: "GET",
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ secret: secret }),
 			});
 			const data = await res.json();
-			if (data.error) {
-				console.log(data.error);
+			if (!data.secret) {
+				console.log("error generating secret");
+				return "";
 			}
-			return secret;
+			return data.secret;
 		},
 		getAuthenticatorURI(secret: string): string {
 			// Generate an authenticator URI that can be used to set up a two-factor authentication app
@@ -75,12 +78,31 @@ export default defineComponent({
 			const label = userStore.user.username;
 			return `otpauth://totp/${issuer}:${encodeURIComponent(label)}?secret=${secret}&issuer=${issuer}`;
 		},
+		async verifyCode(): Promise<boolean> {
+			console.log("verifyCode", this.code);
+			const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/verify2fa", {
+				method: "POST",
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ code: this.code }),
+			});
+			const data = await res.json();
+			if (data.verified) {
+				this.isValid = true;
+				this.dialog = false;
+				console.log("verified", this.code);
+			}
+			// TODO: if invalid, invalidate their existing session token and redirect them to the login page.
+			return data.verified;
+		}
 	},
 });
 </script>
 
 <template>
-	<v-card height="350">
+	<v-card height="600">
 		<v-card-title>
 			<h2>Two Factor Authentication</h2>
 		</v-card-title>
@@ -89,10 +111,54 @@ export default defineComponent({
 				<v-col>
 					<v-switch v-model="enable" color="indigo" inset>{{ enable ? "Disable" : "Enable" }} Two-Factor
 						Authentication </v-switch>
-					<div v-if="userQRCode">
-						<img :src="userQRCode" alt="QR Code">
-					</div>
 				</v-col>
+			</v-row>
+			<v-row>
+				<div v-if="userQRCode">
+					<v-card flat="true">
+						<v-row>
+							<v-col>
+								<v-card-title>Scan this QR code with your authenticator app.</v-card-title>
+								<v-card-subtitle>(Ex. Google Authenticator, Authy etc.)</v-card-subtitle>
+								<v-avatar size="200" rounded="0"><v-img :src="userQRCode" alt="QR Code"></v-img></v-avatar>
+							</v-col>
+							<v-col align-self="center">							
+								<div class="text-center">
+								<v-dialog
+								v-model="dialog"
+								width="auto"
+								>
+								<template v-slot:activator="{ props }">
+									<v-btn
+									color="indigo"
+									v-bind="props"
+									>
+									Next
+						        </v-btn>
+								</template>
+							
+								<v-card>
+								<v-card-text>
+									Type the code from your authenticator app
+						        </v-card-text>
+						        <!-- <v-card-actions> -->
+									<v-form
+									@submit.prevent="verifyCode">
+									<v-text-field
+										v-model="code"
+										:rules="rules"
+										label="OTP"
+										placeholder="Your OTP"></v-text-field>
+									<v-btn color="indigo" type="submit">Verify</v-btn>
+									</v-form>
+						   	    <!-- </v-card-actions> -->
+								</v-card>
+								</v-dialog>			
+							</div>
+							</v-col>
+						</v-row>
+					</v-card>
+				</div>
 			</v-row>
 		</v-container>
 	</v-card>

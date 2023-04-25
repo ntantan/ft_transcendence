@@ -69,4 +69,14 @@ export class UsersController {
     remove(@Param('id') id: number) {
         return this.usersService.remove(id);
     }
+
+    @Get(':id/2faSecret')
+    async get2faSecret(@Param('id') id: number): Promise<User> {
+        return await this.usersService.get2faSecret(id);
+    }
+
+    @Post(':id/verify2fa')
+    async verify2fa(@Param('id') id: number, @Body() code: string): Promise<any> {
+        return await this.usersService.verify2fa(id, code);
+    }
 }
