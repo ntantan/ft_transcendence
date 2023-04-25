@@ -1,0 +1,14 @@
+Rapide à faire:
+- Update du niveau / win / loss a la fin des parties
+- Ajouter des utilisateurs dans les channels privée
+- Supprimer les boutons invite mute etc pour soi meme et dans les direct channels
+- Mettre en forme les messages du chat et l'affichage des users dans un channel
+- Faire une regle pour ne pas recevoir les messages des users qui ont ete bloques
+- Supprimer le channel quand le owner quitte
+- Rajouter un selecteur de temps pour le mute
+
+Un peu long à faire:
+- User page pour les autres utilisateurs que soi meme
+- 2FA
+- Stats utilisateurs
+- Page de présentation
