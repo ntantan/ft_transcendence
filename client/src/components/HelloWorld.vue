@@ -32,24 +32,6 @@
 </template>
 
 <script lang="ts">
-  import axios from 'axios';
-
-  export default {
-    name: 'HomePage',
-    data() {
-      return {
-        bestPlayer: null,
-      };
-    },
-    async mounted() {
-      try {
-        const response = await axios.get(); // Remplacez ceci par l'URL de votre API
-        this.bestPlayer = response.data;
-      } catch (error) {
-        console.error('Erreur lors de la récupération du meilleur joueur:', error);
-      }
-    },
-  };
 </script>
 
 <style scoped>
