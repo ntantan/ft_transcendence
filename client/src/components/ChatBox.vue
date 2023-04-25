@@ -305,7 +305,7 @@ export default defineComponent ({
 
 					<div v-if="channel_types[selected_channel_type] == 'direct'">
 						<v-form @submit.prevent>
-							<v-select :items="this.userStore.user.friends"></v-select>
+							<v-autocomplete :items="this.userStore.user.friends"></v-autocomplete>
 							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
 						</v-form>
 					</div>
@@ -401,11 +401,17 @@ export default defineComponent ({
                         </v-list-item>
                     </v-list>
                     </v-menu>
+
+					<div v-if="this.room.type == 'private'" class="d-flex align-self-end justify-center">
+						<v-form @submit.prevent>
+							<v-select></v-select>
+							<v-btn type="submit" block @click="">Add</v-btn>
+						</v-form>
+					</div>
                 </v-card>
             </v-col>
         </v-row>
     </v-card>
-
 
 	<!-- error bar -->
 	<div class="text-center">
