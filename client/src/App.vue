@@ -120,7 +120,7 @@ export default defineComponent({
 			<v-snackbar
 			v-model="invitebar"
 			:timeout="invitebar_timeout"
-			top
+			location="top"
 			>
 			{{ invitebar_text }}
 				<template v-slot:actions>

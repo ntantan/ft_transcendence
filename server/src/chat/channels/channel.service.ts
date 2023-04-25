@@ -1,7 +1,7 @@
 import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Channel } from "./entities/channel.entity";
-import { ArrayContains, Repository } from "typeorm";
+import { ArrayContainedBy, ArrayContains, FindOperator, In, Repository } from "typeorm";
 import { Messages } from "./entities/messages.entity";
 import { WsException } from "@nestjs/websockets";
 import { User } from "src/users/entities/user.entity";
@@ -57,20 +57,38 @@ export class ChannelService
 		return (channel);
 	}
 
+	async getPublicChannels()
+	{
+		const channels = await this.channelRepository.find({
+			where: [{ type: "public" }]
+		});
+
+		return (channels);
+	}
+
 	// Return all channels that are "private" and include user
 	async getPrivateChannels(user: User)
 	{
 		const channels = await this.channelRepository.createQueryBuilder("channel")
-						.leftJoinAndSelect("channel.channel_user", "channel_user")
-						.leftJoinAndSelect("channel_user.user", "user")
-						.where("user = :user", { user: user})
+						.leftJoinAndSelect("channel.channel_users", "channel_users")
+						.leftJoinAndSelect("channel_users.user", "user")
+						.where("channel.type = :type", {type: "private"})
+						.andWhere("user.id = :user", { user: user.id})
 						.getMany()
+		// console.log(channels)
 		return (channels);
 	}
 
-	async getDirectChannels(user: User, res: Response)
+	async getDirectChannels(user: User)
 	{
-		user.friends;
+		const channels = await this.channelRepository.createQueryBuilder("channel")
+			.leftJoinAndSelect("channel.channel_users", "channel_users")
+			.leftJoinAndSelect("channel_users.user", "user")
+			.where("channel.type = :type", {type: "direct"})
+			.andWhere("user.id = :user", { user: user.id})
+			.getMany()
+		
+		return (channels)
 	}
 
 	// Create one room
@@ -105,6 +123,28 @@ export class ChannelService
 		newChannel.messages = [newMessage];
 	
 		return (await this.channelRepository.save(newChannel));
+	}
+
+	async createDirectChannel(user: User, other_user_id: number)
+	{
+		// const channels = await this.channelRepository.createQueryBuilder("channel")
+		// .leftJoinAndSelect("channel.channel_users", "channel_users")
+		// .leftJoinAndSelect("channel_users.user", "user")
+		// .where("channel.type = :type", {type: "direct"})
+		// .andWhere("user.id IN :...users", { users: [user.id, other_user.id]})
+		// .andWhere("COUNT(user.id) = 2")
+		// .groupBy("channel.id")
+		// .getMany()
+		const channels = await this.getDirectChannels(user);
+		if (channels.find((channels) => {
+			channels.channel_users.find((channels_users) => {
+				channels_users.user.id == other_user_id
+			})
+		}))
+			throw new ForbiddenException('Channel already exists')
+		
+		return (this.createChannel(user.id + "+" + other_user_id, "", user, "direct"));
+		
 	}
 
 	async findChannelById(id: string)
