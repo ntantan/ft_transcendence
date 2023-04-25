@@ -57,14 +57,25 @@ export class ChannelService
 		return (channel);
 	}
 
+	async getPublicChannels()
+	{
+		const channels = await this.channelRepository.find({
+			where: [{ type: "public" }]
+		});
+
+		return (channels);
+	}
+
 	// Return all channels that are "private" and include user
 	async getPrivateChannels(user: User)
 	{
 		const channels = await this.channelRepository.createQueryBuilder("channel")
-						.leftJoinAndSelect("channel.channel_user", "channel_user")
-						.leftJoinAndSelect("channel_user.user", "user")
-						.where("user = :user", { user: user})
+						.leftJoinAndSelect("channel.channel_users", "channel_users")
+						.leftJoinAndSelect("channel_users.user", "user")
+						.where("channel.type = :type", {type: "private"})
+						.andWhere("user.id = :user", { user: user.id})
 						.getMany()
+		// console.log(channels)
 		return (channels);
 	}
 

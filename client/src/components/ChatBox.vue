@@ -19,7 +19,12 @@ export default defineComponent ({
 			isJoined: false,
             room: {},
 			
+			private_channels: [],
+			public_channels: [],
             channels: [],
+			channel_types: ["public", "private"],
+			n_channel_types: 2,
+			selected_channel_type: 0,
 			
             selectedChannel: "",
             roomName: "",
@@ -29,8 +34,8 @@ export default defineComponent ({
 			roomPassword: "",
 			rules: [
 				value => {
-					if (value)
-					return (true)
+					if (value && value.length < 20)
+						return (true)
 					return ("Field can not be empty")
 				}
 			],
@@ -46,7 +51,8 @@ export default defineComponent ({
     },
 
     mounted() {
-        this.fetchAllRooms();
+		this.fetchAllRooms();
+
         this.socket.on('newRoom', () => {
             this.fetchAllRooms();
         })
@@ -62,7 +68,11 @@ export default defineComponent ({
                 this.fetchRoom();
 			else
 				this.selectedChannel = oldVal
-        }
+        },
+
+		selected_channel_type(newVal, oldVal) {
+			this.channelType();
+		}
     },
 
 	computed: {
@@ -74,18 +84,34 @@ export default defineComponent ({
 	},
 
     methods: {
-        fetchAllRooms() {
-            axios.get(CHANNELS_URL, {withCredentials: true})
-            .then((response) => {
-                this.channels = response.data;
-				// console.log(response)
-            })
+        async fetchAllRooms() {
+			this.fetchPublicRooms();
+			this.fetchPrivateRooms();
+			this.channelType();
         },
+
+		fetchPublicRooms() {
+			axios.get(CHANNELS_URL + 'public', {withCredentials: true})
+            .then((response) => {
+                this.public_channels = response.data;
+				this.channelType();
+				// console.log(response);
+            })
+		},
+
+		fetchPrivateRooms() {
+			axios.get(CHANNELS_URL + 'private', {withCredentials: true})
+            .then((response) => {
+                this.private_channels = response.data;
+				this.channelType();
+				// console.log(response);
+            })
+		},
 
         fetchRoom() {
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
-                console.log(response);
+                // console.log(response);
 				this.isJoined = true;
                 this.room = response.data;
 				this.socket.emit('joinSocket', {
@@ -103,7 +129,9 @@ export default defineComponent ({
         createNewRoom() {
 			if (!this.roomName)
 				return;
-            this.socket.emit('createRoom', {room_name: this.roomName, password: this.passWord});
+            this.socket.emit('createRoom', {room_name: this.roomName,
+											password: this.passWord, 
+											room_type: this.channel_types[this.selected_channel_type]});
             this.clearTextArea();
             window.scrollTo(0, document.body.scrollHeight);
         },
@@ -175,6 +203,14 @@ export default defineComponent ({
 			this.snackbar = true;
 		},
 
+		channelType()
+		{
+			if (this.channel_types[this.selected_channel_type] == "public")
+				this.channels = this.public_channels;
+			else if (this.channel_types[this.selected_channel_type] == "private")
+				this.channels = this.private_channels
+		},
+
 		mergeProps,
     },
 });
@@ -188,6 +224,38 @@ export default defineComponent ({
                 <v-card class="h-chat">
 
 					<h2 class="d-flex justify-center align">Channels</h2>
+
+					<v-window
+					v-model="selected_channel_type"
+					show-arrows
+					>
+
+					<template v-slot:prev="{ props }">
+						<v-btn
+						size="small"
+						icon="mdi-chevron-left"
+						@click="props.onClick"
+						>
+						</v-btn>
+					</template>
+					<template v-slot:next="{ props }">
+						<v-btn
+						size="small"
+						icon="mdi-chevron-right"
+						@click="props.onClick"
+						>
+						</v-btn>
+					</template>
+
+						<v-window-item
+						v-for="n in n_channel_types"
+						:key="n"
+						>
+						<v-card height="50px" class="d-flex justify-center align-center">
+							<span>{{ channel_types[selected_channel_type] }}</span>
+						</v-card>
+						</v-window-item>
+					</v-window>
 
 					<v-card height="700" class="scroll my-3">
 						<v-item-group v-model="selectedChannel">
@@ -242,7 +310,7 @@ export default defineComponent ({
 					</v-row>
 
 				</v-card>
-				<v-card class="h-message my-2">
+				<v-card class="h-message my-2 scroll">
 					<v-list>
                         <ul v-for="message in this.room.messages" :key="message">
                             <li>
@@ -259,9 +327,9 @@ export default defineComponent ({
             </v-col>
 
             <v-col cols="3">
-                <v-card class="h-chat">
+                <v-card class="h-chat scroll">
                     <h2 class="d-flex justify-center">User</h2>
-
+					
                     <v-menu v-for="user in this.room.channel_users" :key="user">
                         <template v-slot:activator="{ props: menu }">
                             <v-tooltip>
@@ -317,9 +385,21 @@ export default defineComponent ({
 
 <style>
 
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background-color: #ccc;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #888;
+}
+
 .scroll{
 	overflow-y: scroll;
     scroll-behavior: smooth;
+	scrollbar-color: rebeccapurple green;
+ 	 scrollbar-width: thin;
 }
 
 .h-chat{

@@ -35,7 +35,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 
-		try { await this.channelService.createChannel(body.room_name, body.password, user, "public"); }
+		try { await this.channelService.createChannel(body.room_name, body.password, user, body.room_type); }
 		catch (error) {
 			// console.log(error);
 			this.server.emit('error', error)
