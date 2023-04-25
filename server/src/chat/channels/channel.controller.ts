@@ -51,6 +51,18 @@ export class ChannelController
 		return (this.channelService.getPrivateChannels(user));
 	}
 
+	@Get('/dirct')
+	async getDirectChannels(@Req() req: Request)
+	{
+		if (!req.cookies['jwt'])
+			throw new BadRequestException('No jwt provided');
+		const user = await this.authService.verifyJwt(req.cookies['jwt']);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+
+		return (this.channelService.getDirectChannels(user));
+	}
+
 	// get the channel with messages at id ex: localhost:3000/channels/1
 	@Get(':id')
 	async getChannel(@Param('id') id: string, @Req() req: Request)

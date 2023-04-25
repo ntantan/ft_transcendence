@@ -43,6 +43,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		this.server.emit('newRoom');
 		console.log("room " + body.room_name + " created");
     }
+
+	@SubscribeMessage('createDirectRoom')
+	async createDirectRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	{
+		const user = await this.chatService.get_ws_user(client);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+
+		try { await this.channelService.createDirectChannel(user, body.user_id); }
+		catch (error) {
+			// console.log(error);
+			this.server.emit('error', error)
+		}
+
+	}
 	
     @SubscribeMessage('joinRoom')
     async joinRoom(@MessageBody() body: JoinRoomDTO, @ConnectedSocket() client: Socket) 

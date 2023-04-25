@@ -4,7 +4,8 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
-import { gameStore } from "@/stores/game"
+import { gameStore } from "@/stores/game";
+import { userStore } from "@/stores/user";
 import { mergeProps } from "vue";
 import router from "@/router";
 
@@ -15,15 +16,17 @@ export default defineComponent ({
         return {
             chatStore,
 			gameStore,
+			userStore,
             socket: {},
 			isJoined: false,
             room: {},
 			
+			direct_channels: [],
 			private_channels: [],
 			public_channels: [],
             channels: [],
-			channel_types: ["public", "private"],
-			n_channel_types: 2,
+			channel_types: ["public", "private", "direct"],
+			n_channel_types: 3,
 			selected_channel_type: 0,
 			
             selectedChannel: "",
@@ -108,6 +111,10 @@ export default defineComponent ({
             })
 		},
 
+		fetchDirectRooms() {
+
+		},
+
         fetchRoom() {
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
@@ -135,6 +142,12 @@ export default defineComponent ({
             this.clearTextArea();
             window.scrollTo(0, document.body.scrollHeight);
         },
+
+		createDirectRoom() {
+			this.socket.emit('createDirectRoom', {
+				
+			})
+		},
 
 		joinRoom() {
 			this.socket.emit('joinRoom', {
@@ -197,6 +210,12 @@ export default defineComponent ({
             console.log("inviteGame OK");
         },
 
+		toProfile(channel_user: any)
+		{
+			const id = channel_user.user.id;
+			
+		},
+
 		sendSnackbar(msg: string)
 		{
 			this.snackbar_text = msg;
@@ -208,7 +227,9 @@ export default defineComponent ({
 			if (this.channel_types[this.selected_channel_type] == "public")
 				this.channels = this.public_channels;
 			else if (this.channel_types[this.selected_channel_type] == "private")
-				this.channels = this.private_channels
+				this.channels = this.private_channels;
+			else if (this.channel_types[this.selected_channel_type] == "direct")
+				this.channels = this.direct_channels;
 		},
 
 		mergeProps,
@@ -247,7 +268,7 @@ export default defineComponent ({
 						</v-btn>
 					</template>
 
-						<v-window-item
+					<v-window-item
 						v-for="n in n_channel_types"
 						:key="n"
 						>
@@ -267,11 +288,27 @@ export default defineComponent ({
 						</v-item-group>
 					</v-card>
 
-					<v-form @submit.prevent>
-						<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
-						<v-text-field v-model="this.passWord" label="Password"></v-text-field>
-						<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
-					</v-form>
+					<div v-if="channel_types[selected_channel_type] == 'public'">
+						<v-form @submit.prevent>
+							<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+							<v-text-field v-model="this.passWord" label="Password"></v-text-field>
+							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
+						</v-form>
+					</div>
+
+					<div v-if="channel_types[selected_channel_type] == 'private'">
+						<v-form @submit.prevent>
+							<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
+						</v-form>
+					</div>
+
+					<div v-if="channel_types[selected_channel_type] == 'direct'">
+						<v-form @submit.prevent>
+							<v-select :items="this.userStore.user.friends"></v-select>
+							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
+						</v-form>
+					</div>
 
                 </v-card>
 
@@ -300,8 +337,11 @@ export default defineComponent ({
 					</v-row>
 
 					<v-row  v-if="isJoined">
-						<v-col class="ma-2" align-self="center" cols="9">
+						<v-col class="ma-2" align-self="center" cols="5">
 							<v-card-title>{{ selectedRoomname }}</v-card-title>
+						</v-col>
+
+						<v-col cols="4">
 						</v-col>
 
 						<v-col align-self="center">
@@ -312,13 +352,15 @@ export default defineComponent ({
 				</v-card>
 				<v-card class="h-message my-2 scroll">
 					<v-list>
-                        <ul v-for="message in this.room.messages" :key="message">
-                            <li>
+                        <!-- <ul v-for="message in this.room.messages" :key="message">
+                            <li> -->
                                 <!-- mise en page messages -->
-                                {{ message.date }}
-                                {{ message.message }}
-                            </li>
-                        </ul>
+								<v-card width="200" v-for="message in this.room.messages" style="overflow-wrap: break-word;">
+									{{ message.date }}
+									{{ message.message }}
+								</v-card>
+                            <!-- </li>
+                        </ul> -->
 					</v-list>
 				</v-card>
 
@@ -353,6 +395,9 @@ export default defineComponent ({
                         </v-list-item>
                         <v-list-item>
                             <v-list-item-title><v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn></v-list-item-title>
+                        </v-list-item>
+						<v-list-item>
+                            <v-list-item-title><v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn></v-list-item-title>
                         </v-list-item>
                     </v-list>
                     </v-menu>
