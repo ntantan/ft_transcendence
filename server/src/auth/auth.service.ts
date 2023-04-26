@@ -1,6 +1,6 @@
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/users/entities/user.entity';
-import { Injectable, Req, Res } from '@nestjs/common';
+import { Injectable, Req, Res, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
@@ -9,6 +9,9 @@ import { lastValueFrom } from 'rxjs';
 import { Response } from 'express';
 import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { Status } from 'src/users/enum/status.enum';
+import { authenticator } from 'otplib';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +20,9 @@ export class AuthService {
         private jwtService: JwtService,
         private readonly configService: ConfigService, 
         private readonly httpService: HttpService,
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
+        private readonly connection: DataSource,
     ) {}
 
     async validateUser(id: number, password?:string): Promise<any> {
@@ -133,4 +139,24 @@ export class AuthService {
 		res.send("logged out successfully");
     }
     //  wrapper function that calls get Token, getInfo, saveUserInfo? and name og wrapper == controller name(get 42-redirect)
+
+    async get2faSecret(id: number): Promise<User> {
+        const user = await this.usersService.findOne(id);
+        if (!user) {
+            throw new NotFoundException(`User #${id} not found`);
+        }
+        const secret = authenticator.generateSecret();
+        user.secret = secret;
+        this.userRepository.save(user);
+        return user;
+    }
+
+    async verify2fa(id: number, code: any): Promise<any> {
+        const user = await this.usersService.findOne(id);
+        if (!user) {
+            throw new NotFoundException(`User #${id} not found`);
+        }
+        const isValid = authenticator.verify({ token: code.code, secret: user.secret });
+        return { verified: isValid };
+    }
 }

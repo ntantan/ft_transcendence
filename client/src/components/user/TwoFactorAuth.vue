@@ -18,6 +18,7 @@ export default defineComponent({
 			rules: [
 				(v: string) => !!v || "Required",
 				(v: string) => v.length === 6 || "Must be 6 digits",
+				async (v: string) => await this.verifyCode() || "Invalid code",
 			],
 		};
 	},
@@ -57,7 +58,7 @@ export default defineComponent({
 		},
 		async generateSecret(): Promise<string> {
 			// TODO: generate, save the secret key in the database and return it
-			const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/2faSecret", {
+			const res = await fetch("http://localhost:3000/auth/" + userStore.user.id + "/2faSecret", {
 				method: "GET",
 				credentials: "include",
 				headers: {
@@ -80,7 +81,7 @@ export default defineComponent({
 		},
 		async verifyCode(): Promise<boolean> {
 			console.log("verifyCode", this.code);
-			const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/verify2fa", {
+			const res = await fetch("http://localhost:3000/auth/" + userStore.user.id + "/verify2fa", {
 				method: "POST",
 				credentials: "include",
 				headers: {
@@ -90,12 +91,28 @@ export default defineComponent({
 			});
 			const data = await res.json();
 			if (data.verified) {
-				this.isValid = true;
-				this.dialog = false;
-				console.log("verified", this.code);
+				await this.updateData();
 			}
+			else {
+				// this.$refs.codeForm.reset();
+			
+			}
+			this.code = "";
 			// TODO: if invalid, invalidate their existing session token and redirect them to the login page.
 			return data.verified;
+		},
+		async updateData() {
+			this.isValid = true;
+			this.dialog = false;
+			this.userQRCode = "";
+			console.log("verified", this.code);
+			await this.updateTwoFa(true);
+		},
+		cancelEnable() {
+			this.dialog = false;
+			this.userQRCode = "";
+			this.code = "";
+			this.enable = false;
 		}
 	},
 });
@@ -114,7 +131,7 @@ export default defineComponent({
 				</v-col>
 			</v-row>
 			<v-row>
-				<div v-if="userQRCode">
+				<div v-if="userQRCode && !userStore.user.two_fa">
 					<v-card flat="true">
 						<v-row>
 							<v-col>
@@ -143,13 +160,19 @@ export default defineComponent({
 						        </v-card-text>
 						        <!-- <v-card-actions> -->
 									<v-form
-									@submit.prevent="verifyCode">
+									@submit.prevent="verifyCode"
+									>
 									<v-text-field
 										v-model="code"
 										:rules="rules"
 										label="OTP"
-										placeholder="Your OTP"></v-text-field>
-									<v-btn color="indigo" type="submit">Verify</v-btn>
+										placeholder="Your OTP"
+										clearable
+										></v-text-field>
+									<div class="d-flex flex-column justify-center">
+										<v-btn color="indigo" type="submit">Verify</v-btn>
+										<v-btn color="warning" @click="cancelEnable">Cancel</v-btn>
+									</div>
 									</v-form>
 						   	    <!-- </v-card-actions> -->
 								</v-card>
@@ -158,6 +181,20 @@ export default defineComponent({
 							</v-col>
 						</v-row>
 					</v-card>
+				</div>
+				<div v-if="userStore.user.two_fa">
+					<v-alert
+    					type="success"
+    					title="Two Factor Authentication is enabled."
+    					text="You will be asked to enter a code from your authenticator app when you login."
+  					></v-alert>
+				</div>
+				<div v-if="!userStore.user.two_fa && !userQRCode">
+					<v-alert
+    					type="warning"
+    					title="Two Factor Authentication is not enabled."
+    					text="You will not be asked to enter a code from your authenticator app when you login."
+  					></v-alert>
 				</div>
 			</v-row>
 		</v-container>

@@ -13,7 +13,7 @@ import { createReadStream } from 'fs';
 import { join } from 'path';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { Blocked } from './entities/blocked.entity';
-import { authenticator } from 'otplib';
+
 
 @Injectable()
 export class UsersService {
@@ -228,23 +228,4 @@ export class UsersService {
         return user;
     }
 
-    async get2faSecret(id: number): Promise<User> {
-        const user = await this.findOne(id);
-        if (!user) {
-            throw new NotFoundException(`User #${id} not found`);
-        }
-        const secret = authenticator.generateSecret();
-        user.secret = secret;
-        this.userRepository.save(user);
-        return user;
-    }
-
-    async verify2fa(id: number, code: any): Promise<any> {
-        const user = await this.findOne(id);
-        if (!user) {
-            throw new NotFoundException(`User #${id} not found`);
-        }
-        const isValid = authenticator.verify({ token: code.code, secret: user.secret });
-        return { verified: isValid };
-    }
 }

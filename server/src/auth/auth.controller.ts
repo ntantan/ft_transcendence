@@ -1,6 +1,6 @@
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from './../users/users.service';
-import { Controller, Get, Req, Post, UseGuards, Res, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Req, Post, UseGuards, Res, HttpException, HttpStatus, Param, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -61,4 +61,14 @@ export class AuthController {
 			return(res.status(401).send("jwt verification failed"));
 		return(res.status(200).send(verify));
 	}
+
+	@Get(':id/2faSecret')
+    async get2faSecret(@Param('id') id: number): Promise<User> {
+        return await this.authService.get2faSecret(id);
+    }
+
+    @Post(':id/verify2fa')
+    async verify2fa(@Param('id') id: number, @Body() code: string): Promise<any> {
+        return await this.authService.verify2fa(id, code);
+    }
 }

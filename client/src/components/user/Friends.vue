@@ -58,6 +58,9 @@ export default defineComponent({
         },
         async getFriends(): Promise<any[]> {
             const friends = userStore.user.friends;
+            if (friends === undefined) {
+                return [];
+            }
             console.log(`friends length = ${friends.length}`);
             let friendsList = [];
             for (let i = 0; i < friends.length; i++) {
