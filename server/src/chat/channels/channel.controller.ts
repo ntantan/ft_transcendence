@@ -5,6 +5,7 @@ import { UpdateUserDTO } from "./dto/update-user.dto";
 import { createMessageDTO } from "./dto/create-message.dto";
 import { AuthService } from "src/auth/auth.service";
 import { ChatGateway } from "../chat.gateway";
+import { ConstraintMetadata } from "class-validator/types/metadata/ConstraintMetadata";
 
 
 @Controller("channels")
@@ -51,7 +52,7 @@ export class ChannelController
 		return (this.channelService.getPrivateChannels(user));
 	}
 
-	@Get('/dirct')
+	@Get('/direct')
 	async getDirectChannels(@Req() req: Request)
 	{
 		if (!req.cookies['jwt'])

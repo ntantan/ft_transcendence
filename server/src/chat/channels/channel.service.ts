@@ -75,19 +75,27 @@ export class ChannelService
 						.where("channel.type = :type", {type: "private"})
 						.andWhere("user.id = :user", { user: user.id})
 						.getMany()
-		// console.log(channels)
+		// console.log(channels);
 		return (channels);
 	}
 
 	async getDirectChannels(user: User)
 	{
-		const channels = await this.channelRepository.createQueryBuilder("channel")
-			.leftJoinAndSelect("channel.channel_users", "channel_users")
-			.leftJoinAndSelect("channel_users.user", "user")
-			.where("channel.type = :type", {type: "direct"})
-			.andWhere("user.id = :user", { user: user.id})
-			.getMany()
-		
+		// const channels = await this.channelRepository.createQueryBuilder("channel")
+		// 	.leftJoinAndSelect("channel.channel_users", "channel_users")
+		// 	.leftJoinAndSelect("channel_users.user", "user")
+		// 	.where("channel.type = :type", {type: "direct"})
+		// 	.andWhere("user.id = :user", { user: user.id})
+		// 	.getMany()
+		const channels = await this.channelRepository.find({
+			relations: {
+				channel_users: {
+					user: true,
+				}
+			},
+			where: [{ type: "direct", }]
+		})
+		console.log(channels);
 		return (channels)
 	}
 
@@ -136,15 +144,14 @@ export class ChannelService
 		// .groupBy("channel.id")
 		// .getMany()
 		const channels = await this.getDirectChannels(user);
-		if (channels.find((channels) => {
+		if (channels && channels.find((channels) => {
 			channels.channel_users.find((channels_users) => {
 				channels_users.user.id == other_user_id
 			})
 		}))
 			throw new ForbiddenException('Channel already exists')
-		
+
 		return (this.createChannel(user.id + "+" + other_user_id, "", user, "direct"));
-		
 	}
 
 	async findChannelById(id: string)

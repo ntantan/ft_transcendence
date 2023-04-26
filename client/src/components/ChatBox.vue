@@ -16,15 +16,18 @@ export default defineComponent ({
         return {
             chatStore,
 			gameStore,
-			userStore,
+			// userStore,
             socket: {},
 			isJoined: false,
             room: {},
 			
+			users: [],
+			select_direct_id: "",
 			direct_channels: [],
 			private_channels: [],
 			public_channels: [],
             channels: [],
+
 			channel_types: ["public", "private", "direct"],
 			n_channel_types: 3,
 			selected_channel_type: 0,
@@ -90,29 +93,54 @@ export default defineComponent ({
         async fetchAllRooms() {
 			this.fetchPublicRooms();
 			this.fetchPrivateRooms();
+			this.fetchDirectRooms();
+			this.fetchUsers();
 			this.channelType();
         },
 
 		fetchPublicRooms() {
 			axios.get(CHANNELS_URL + 'public', {withCredentials: true})
-            .then((response) => {
-                this.public_channels = response.data;
-				this.channelType();
-				// console.log(response);
-            })
+				.then((response) => {
+					this.public_channels = response.data;
+					this.channelType();
+					// console.log(response);
+				})
+				.catch((error) => {
+						console.log(error)
+				})
 		},
 
 		fetchPrivateRooms() {
-			axios.get(CHANNELS_URL + 'private', {withCredentials: true})
-            .then((response) => {
-                this.private_channels = response.data;
-				this.channelType();
-				// console.log(response);
-            })
+			axios.get(CHANNELS_URL + 'private', { withCredentials: true })
+				.then((response) => {
+					this.private_channels = response.data;
+					this.channelType();
+					// console.log(response);
+				})
+				.catch((error) => {
+						console.log(error)
+				})
 		},
 
 		fetchDirectRooms() {
+			axios.get(CHANNELS_URL + 'direct', { withCredentials: true })
+				.then((response) => {
+					this.direct_channels = response.data;
+					this.channelType();
+				})
+				.catch((error) => {
+					console.log(error);
+				})
+		},
 
+		fetchUsers() {
+			axios.get("http://localhost:3000/users", { withCredentials: true })
+				.then((response) => {
+					this.users = response.data;
+				})
+				.catch((error) => {
+					console.log(error)
+				})
 		},
 
         fetchRoom() {
@@ -143,9 +171,10 @@ export default defineComponent ({
             window.scrollTo(0, document.body.scrollHeight);
         },
 
+		// Create a direct mesage room
 		createDirectRoom() {
 			this.socket.emit('createDirectRoom', {
-				
+				user_id: this.select_direct_id,
 			})
 		},
 
@@ -160,6 +189,11 @@ export default defineComponent ({
 			this.socket.emit('leaveRoom', {
 				id: this.selectedChannel,
 			})
+		},
+
+		//  Add user to a private room
+		privateAddUser() {
+
 		},
 
         clearTextArea() {
@@ -210,6 +244,7 @@ export default defineComponent ({
             console.log("inviteGame OK");
         },
 
+		// Redirect to selected user profile page
 		toProfile(channel_user: any)
 		{
 			const id = channel_user.user.id;
@@ -305,8 +340,8 @@ export default defineComponent ({
 
 					<div v-if="channel_types[selected_channel_type] == 'direct'">
 						<v-form @submit.prevent>
-							<v-autocomplete :items="this.userStore.user.friends"></v-autocomplete>
-							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
+							<v-autocomplete v-model="this.select_direct_id" :items="this.users" item-title="username" item-value="id" label="Select user"></v-autocomplete>
+							<v-btn type="submit" block @click="this.createDirectRoom()">Start conversation</v-btn>
 						</v-form>
 					</div>
 
@@ -382,10 +417,15 @@ export default defineComponent ({
                         </template>
                     <v-list>
                         <v-list-item>
-                            <v-list-item-title><v-btn type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn></v-list-item-title>
+                            <v-list-item-title>
+								<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
+								<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
+							</v-list-item-title>
                         </v-list-item>
                         <v-list-item>
-                            <v-list-item-title><v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn></v-list-item-title>
+                            <v-list-item-title>
+								<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
+							</v-list-item-title>
                         </v-list-item>
                         <v-list-item>
                             <v-list-item-title>
@@ -394,18 +434,22 @@ export default defineComponent ({
 							</v-list-item-title>
                         </v-list-item>
                         <v-list-item>
-                            <v-list-item-title><v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn></v-list-item-title>
+                            <v-list-item-title>
+								<v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn>
+							</v-list-item-title>
                         </v-list-item>
 						<v-list-item>
-                            <v-list-item-title><v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn></v-list-item-title>
+                            <v-list-item-title>
+								<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
+							</v-list-item-title>
                         </v-list-item>
                     </v-list>
                     </v-menu>
 
-					<div v-if="this.room.type == 'private'" class="d-flex align-self-end justify-center">
+					<div v-if="this.room.type == 'private'" class="mr-2 mt-4">
 						<v-form @submit.prevent>
-							<v-select></v-select>
-							<v-btn type="submit" block @click="">Add</v-btn>
+							<v-autocomplete v-model="this.select_direct" :items="this.users" item-title="username" item-value="id" label="Select user"></v-autocomplete>
+							<v-btn type="submit" block @click="this.privateAddUser()">Add</v-btn>
 						</v-form>
 					</div>
                 </v-card>
