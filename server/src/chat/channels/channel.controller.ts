@@ -60,8 +60,10 @@ export class ChannelController
 		const user = await this.authService.verifyJwt(req.cookies['jwt']);
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
-
-		return (this.channelService.getDirectChannels(user));
+		
+		const res = await this.channelService.getDirectChannels(user);
+		this.channelService.adaptDirectChannelName(user, res);
+		return (res);
 	}
 
 	// get the channel with messages at id ex: localhost:3000/channels/1
