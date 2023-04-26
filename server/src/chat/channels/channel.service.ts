@@ -79,23 +79,44 @@ export class ChannelService
 		return (channels);
 	}
 
+	adaptDirectChannelName(user: User, channels: Channel[])
+	{
+		for (const channel of channels)
+		{
+			const other = channel.channel_users.find((channel_user) => channel_user.user.id !== user.id);
+			if (other)
+				channel.name = other.user.username;
+		}
+	}
+
 	async getDirectChannels(user: User)
 	{
-		// const channels = await this.channelRepository.createQueryBuilder("channel")
-		// 	.leftJoinAndSelect("channel.channel_users", "channel_users")
-		// 	.leftJoinAndSelect("channel_users.user", "user")
-		// 	.where("channel.type = :type", {type: "direct"})
-		// 	.andWhere("user.id = :user", { user: user.id})
-		// 	.getMany()
+		const select_channels = await this.channelRepository.find({
+			where: [{
+				type: "direct",
+				channel_users: {
+					user: {
+						id: user.id
+					}
+				},
+			}],
+			select: {
+				id: true,
+			}
+		});
+		const arr = [];
+		select_channels.map((channel) => arr.push(channel.id));
 		const channels = await this.channelRepository.find({
 			relations: {
 				channel_users: {
 					user: true,
-				}
+				},
 			},
-			where: [{ type: "direct", }]
+			where: {
+				id: In(arr)
+			}
 		})
-		console.log(channels);
+		// console.log(channels)
 		return (channels)
 	}
 
@@ -135,23 +156,15 @@ export class ChannelService
 
 	async createDirectChannel(user: User, other_user_id: number)
 	{
-		// const channels = await this.channelRepository.createQueryBuilder("channel")
-		// .leftJoinAndSelect("channel.channel_users", "channel_users")
-		// .leftJoinAndSelect("channel_users.user", "user")
-		// .where("channel.type = :type", {type: "direct"})
-		// .andWhere("user.id IN :...users", { users: [user.id, other_user.id]})
-		// .andWhere("COUNT(user.id) = 2")
-		// .groupBy("channel.id")
-		// .getMany()
 		const channels = await this.getDirectChannels(user);
-		if (channels && channels.find((channels) => {
-			channels.channel_users.find((channels_users) => {
-				channels_users.user.id == other_user_id
-			})
-		}))
+		for (const channel of channels)
+		{
+			if (channel.channel_users.find((channel_user) => channel_user.user.id == user.id) 
+				&& channel.channel_users.find((channel_user) => channel_user.user.id == other_user_id))
 			throw new ForbiddenException('Channel already exists')
-
-		return (this.createChannel(user.id + "+" + other_user_id, "", user, "direct"));
+		}
+		const newChannel = await this.createChannel("this private", "", user, "direct");
+		this.addUser(String(newChannel.id), await this.usersService.findOne(other_user_id), "");
 	}
 
 	async findChannelById(id: string)
@@ -173,11 +186,6 @@ export class ChannelService
 	async findChannelUserByUser(channel: Channel, user_id: number)
 	{
 		const channel_user = channel.channel_users.find((channel_user) => channel_user.user.id === user_id);
-		// const channel_user = await this.channelUserRepository.findOne({
-		// 	relations: ['user'],
-		// 	loadRelationIds: true,
-		// 	where: [{user: user}],
-		// })
 		if (channel_user)
 			return (channel_user);
 		throw new NotFoundException("User " + user_id + " not found in this channel");
@@ -338,6 +346,12 @@ export class ChannelService
 			throw new UnauthorizedException("This user was banned in this channel");
 
 		return (await this.channelRepository.save(channel));
+	}
+
+	async addUserPrivate(channel_id: string, user_id: string)
+	{
+		const user = await this.usersService.findOne(Number(user_id));
+		return (await this.addUser(channel_id, user, ""));
 	}
 
 	async rmUser(channel_id: string, user: User)
