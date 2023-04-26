@@ -163,7 +163,7 @@ export class ChannelService
 				&& channel.channel_users.find((channel_user) => channel_user.user.id == other_user_id))
 			throw new ForbiddenException('Channel already exists')
 		}
-		const newChannel = await this.createChannel("this private", "", user, "direct");
+		const newChannel = await this.createChannel(user.username, "", user, "direct");
 		this.addUser(String(newChannel.id), await this.usersService.findOne(other_user_id), "");
 	}
 
@@ -195,8 +195,8 @@ export class ChannelService
 	async newMessage(channel_id: string, user: User, message: string)
 	{
 		const channel = await this.findChannelById(channel_id);
-		if (await this.isMuted(channel, user))
-			throw new ForbiddenException('User is muted');
+		const channel_user = await this.findChannelUserByUser(channel, user.id);
+		await this.isMuted(channel_user)
 
 		const newMessage = this.messageRepository.create({
 			message: message,
@@ -208,19 +208,22 @@ export class ChannelService
 		return (await this.messageRepository.save(newMessage));
 	}
 
-	async isMuted(channel: Channel, user: User)
+	async isMuted(channel_user: ChannelUser)
 	{
-		const channel_user = await this.findChannelUserByUser(channel, user.id);
 		// if not muted
+		var current = new Date();
 		if (channel_user.muted == null)
 			return (false);
 		else
 		{
-			const current = new Date();
 			if (current > channel_user.muted)
+			{
+				channel_user.muted = null;
 				return (false)
+			}
 		}
-		return (true);
+		throw new ForbiddenException('User is muted for ' + Math.floor((channel_user.muted.getTime() - current.getTime()) / 60000) + ' minutes.');
+
 	}
 
 	// Add admin if true, remove admin if false

@@ -16,7 +16,7 @@ export default defineComponent ({
         return {
             chatStore,
 			gameStore,
-			// userStore,
+			userStore,
             socket: {},
 			isJoined: false,
             room: {},
@@ -32,6 +32,8 @@ export default defineComponent ({
 			channel_types: ["public", "private", "direct"],
 			n_channel_types: 3,
 			selected_channel_type: 0,
+
+			muted_time: "",
 			
             selectedChannel: "",
             roomName: "",
@@ -218,9 +220,24 @@ export default defineComponent ({
         muteUser(channel_user: any) {
             this.socket.emit('addMute', {
 								id: this.selectedChannel, 
-								user_id: channel_user.user.id})
+								user_id: channel_user.user.id,
+								muted_time: '99999'})
             // ajouter temps de mute
         },
+
+		unmuteUser(channel_user: any) {
+			this.socket.emit('rmMute', {
+				id: this.selectedChannel,
+				user_id: channel_user.user.id
+			})
+		},
+
+		timedMuteUser(channel_user: any, time: string) {
+            this.socket.emit('addMute', {
+								id: this.selectedChannel, 
+								user_id: channel_user.user.id,
+								muted_time: time})
+		},
 
         kickUser(channel_user: any) {
             this.socket.emit('kickUser', {
@@ -423,12 +440,20 @@ export default defineComponent ({
 								</template>
 							</v-tooltip>
 						</template>
-							<!-- <div > -->
-							<v-list v-if="channel_types[selected_channel_type] !== 'direct'">
+						<!-- <div > -->
+						<!-- && user.user.id !== this.userStore.user.id"> -->
+						<v-list v-if="channel_types[selected_channel_type] !== 'direct'">  
 								<v-list-item>
 									<v-list-item-title>
 										<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
 										<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
+										<v-btn-group
+										color="secondary"
+										>
+											<v-btn value="1" @click="timedMuteUser(user, '1')">1</v-btn>
+											<v-btn value="10" @click="timedMuteUser(user, '10')">10</v-btn>
+											<v-btn value="60" @click="timedMuteUser(user, '60')">60</v-btn>
+										</v-btn-group>
 									</v-list-item-title>
 								</v-list-item>
 								<v-list-item>

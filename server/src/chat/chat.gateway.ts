@@ -189,11 +189,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
-		
-		try { await this.channelService.addMuted(user, body.id, body.user_id, 1)}
+
+		try { await this.channelService.addMuted(user, body.id, body.user_id, Number(body.muted_time))}
 		catch (error) {
 			// console.log(error);
-			// this.server.emit('error', error);
 			client.emit('error', error);
 		}
 
