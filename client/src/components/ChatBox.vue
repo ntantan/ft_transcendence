@@ -414,47 +414,47 @@ export default defineComponent ({
             <v-col cols="3">
                 <v-card class="h-chat scroll">
                     <h2 class="d-flex justify-center">User</h2>
-					
-					<div>
-						<v-menu v-for="user in this.room.channel_users" :key="user">
-							<template v-slot:activator="{ props: menu }">
-								<v-tooltip>
-									<template v-slot:activator="{ props: tooltip }">
-										<v-btn color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn> 
-									</template>
-								</v-tooltip>
-							</template>
-							<v-list>
+
+					<v-menu v-for="user in this.room.channel_users" :key="user">
+						<template v-slot:activator="{ props: menu }">
+							<v-tooltip>
+								<template v-slot:activator="{ props: tooltip }">
+									<v-btn color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn> 
+								</template>
+							</v-tooltip>
+						</template>
+							<!-- <div > -->
+							<v-list v-if="channel_types[selected_channel_type] !== 'direct'">
 								<v-list-item>
 									<v-list-item-title>
 										<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
-								<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item>
-							<v-list-item-title>
-								<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item>
-							<v-list-item-title>
-								<v-btn v-if="!user.admin" type="submit" block @click="this.addAdmin(user)" color="primary">admin</v-btn>
-								<v-btn v-if="user.admin" type="submit" block @click="this.rmAdmin(user)" color="primary">unadmin</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item>
-							<v-list-item-title>
-								<v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-						<v-list-item>
-							<v-list-item-title>
-								<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                    </v-list>
-				</v-menu>
-				</div>
+										<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
+									</v-list-item-title>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-title>
+										<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
+									</v-list-item-title>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-title>
+										<v-btn v-if="!user.admin" type="submit" block @click="this.addAdmin(user)" color="primary">admin</v-btn>
+										<v-btn v-if="user.admin" type="submit" block @click="this.rmAdmin(user)" color="primary">unadmin</v-btn>
+									</v-list-item-title>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-title>
+										<v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn>
+									</v-list-item-title>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-title>
+										<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
+									</v-list-item-title>
+								</v-list-item>
+							</v-list>
+							<!-- </div> -->
+						</v-menu>
 				
 				<div v-if="this.room.type == 'private'" class="mr-2 mt-4">
 					<v-form @submit.prevent>
