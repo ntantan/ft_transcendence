@@ -84,6 +84,7 @@ export default defineComponent({
 					this.gameStore.currentRoom = response.roomName;
 			});
 			router.push('/game');
+			console.log(this.gameStore.currentRoom, this.gameStore.inGame)
 		},
 	}
 });

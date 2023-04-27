@@ -188,6 +188,30 @@ export class UsersService {
         }
     }
 
+	async loseUp(user: User) {
+        const queryRunner = this.connection.createQueryRunner();
+
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            user.lose++;
+
+            const loseUpEvent = new Event();
+            loseUpEvent.name = 'lose_up_user';
+            loseUpEvent.type = 'lose';
+            loseUpEvent.payload = { userId: user.id };
+
+            await queryRunner.manager.save(user);
+            await queryRunner.manager.save(loseUpEvent);
+
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     private async preloadFriend(friend: Friend): Promise<Friend> {
         const existingFriend = await this.friendRepository.findOne({ where: [{ userId: friend.userId }] });
         if (existingFriend) {

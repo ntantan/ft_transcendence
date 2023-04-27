@@ -8,12 +8,14 @@ import { Server, Socket } from 'socket.io';
 import { HistoryService } from './history.service';
 import { User } from 'src/users/entities/user.entity';
 import { Player } from './objects/Player';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class GameService {
 
 	constructor(private readonly historyService: HistoryService, 
 				private readonly schedulerRegistry: SchedulerRegistry,
+				private readonly userService: UsersService
 				) {}
 
 	//		CONTROLLER		//
@@ -171,6 +173,19 @@ export class GameService {
 
 		room.state = "ending";
 		server.to(room.name).emit("endGame", { roomName: room.name, endStatus: room.end_status });
+
+		const p1 = await this.userService.findOne(Number(roomcpy.player_1));
+		const p2 = await this.userService.findOne(Number(roomcpy.player_2));
+		if (roomcpy.end_status == "1")
+		{
+			this.userService.winUp(p1);
+			this.userService.loseUp(p2);
+		}
+		else
+		{
+			this.userService.loseUp(p1);
+			this.userService.winUp(p2);
+		}
 	}
 
 	createRoom(mod: number, type: string)
@@ -247,14 +262,15 @@ export class GameService {
 		this.createInterval(server, find, find.name);
 	}
 
-	getPlayerSide(clientId: string, roomName: string)
+	getPlayerSide(clientId: string, room: Room)
 	{
-		var find = this.rooms.find((room) => room.name === roomName);
-		if (!find)
+		// var find = this.rooms.find((room) => room.name === roomName);
+		console.log("GPS", room)
+		if (!room)
 			return (0);
-		if (find.player_1 == clientId)
+		if (room.player_1 == clientId)
 			return (1);
-		if (find.player_2 == clientId)
+		if (room.player_2 == clientId)
 			return (2);
 	}
 
@@ -283,11 +299,7 @@ export class GameService {
 			console.log("room is full !");
 			return (null);
 		}
-
-		if (find.player_1 && find.player_2)
-			this.startMatch(server, find);
-			// this.createInterval(server, find, find.name);
-		return (find.name);
+		return (find);
 	}
 
 	leaveRoom(roomName: string, clientId: string)
