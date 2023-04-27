@@ -69,6 +69,10 @@ export default defineComponent ({
 		this.socket.on('updateRoom', () => {
 			this.fetchRoom();
 		})
+
+		this.socket.on('channelRemoved', () => {
+			this.fetchAllRooms();
+		})
     },
 
     watch: {
@@ -89,6 +93,7 @@ export default defineComponent ({
 			const find = this.channels.find((channel) => channel.id == this.selectedChannel);
 			if (find)
 				return (find.name);
+			return (null);
 		}
 	},
 
@@ -150,7 +155,7 @@ export default defineComponent ({
         fetchRoom() {
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
-                console.log(response.data);
+                // console.log(response.data);
 				this.isJoined = true;
                 this.room = response.data;
 				this.socket.emit('joinSocket', {
@@ -177,9 +182,12 @@ export default defineComponent ({
 
 		// Create a direct mesage room
 		createDirectRoom() {
-			this.socket.emit('createDirectRoom', {
-				user_id: this.select_direct_id,
-			})
+			if (this.select_direct_id)
+			{
+				this.socket.emit('createDirectRoom', {
+					user_id: this.select_direct_id,
+				})
+			}
 		},
 
 		joinRoom() {
@@ -197,10 +205,13 @@ export default defineComponent ({
 
 		//  Add user to a private room
 		privateAddUser() {
-			this.socket.emit('addUserPrivate', {
-				id: this.selectedChannel,
-				user_id: this.select_private_id
-			})
+			if (this.select_private_id)
+			{
+				this.socket.emit('addUserPrivate', {
+					id: this.selectedChannel,
+					user_id: this.select_private_id
+				})
+			}
 		},
 
         clearTextArea() {
@@ -375,24 +386,24 @@ export default defineComponent ({
 
 				<v-card class="h-options mx-auto">
 
-					<v-row v-if="!isJoined && selectedChannel">
+					<v-row v-if="!isJoined && selectedRoomname">
 						<v-col class="ma-2" align-self="center" cols="5">
 							<v-card-title>{{ selectedRoomname }}</v-card-title>
 						</v-col>
-						<div v-if="this.channel_types[this.selected_channel_type] == 'public'">
-						<v-col class="mr-3"  cols="4" align-self="center">
-							<v-text-field
-								style="width: 200px;"
-								v-model="roomPassword"
-								label="Leave empty if not required"
-								variant="underlined"
-								clearable>
-							</v-text-field>
-						</v-col>
-							<v-col align-self="center">
+						<!-- <div v-if="this.channel_types[this.selected_channel_type] == 'public'"> -->
+							<v-col v-if="this.channel_types[this.selected_channel_type] == 'public'" class="mr-3"  cols="4" align-self="center">
+								<v-text-field
+									style="width: 200px;"
+									v-model="roomPassword"
+									label="Leave empty if not required"
+									variant="underlined"
+									clearable>
+								</v-text-field>
+							</v-col>
+							<v-col align-self="center" v-if="this.channel_types[this.selected_channel_type] == 'public'">
 								<v-btn width="100" color="primary" @click="joinRoom()">Join</v-btn>
 							</v-col>
-						</div>
+						<!-- </div> -->
 					</v-row>
 
 					<v-row  v-if="isJoined">
@@ -402,11 +413,10 @@ export default defineComponent ({
 
 						<v-col cols="4">
 						</v-col>
-						<div v-if="this.channel_types[this.selected_channel_type] !== 'direct'">
-							<v-col align-self="center">
-								<v-btn width="100" color="primary" @click="leaveRoom()">Leave</v-btn>
-							</v-col>
-						</div>
+
+						<v-col v-if="this.channel_types[this.selected_channel_type] !== 'direct'" align-self="center">
+							<v-btn width="100" color="primary" @click="leaveRoom()">Leave</v-btn>
+						</v-col>
 					</v-row>
 
 				</v-card>
@@ -436,52 +446,51 @@ export default defineComponent ({
 						<template v-slot:activator="{ props: menu }">
 							<v-tooltip>
 								<template v-slot:activator="{ props: tooltip }">
-									<v-btn color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn> 
+									<v-btn color="primary" v-bind="mergeProps(menu, tooltip)" class="d-flex ma-2">{{ user.user.username }}</v-btn> 
 								</template>
 							</v-tooltip>
 						</template>
-						<!-- <div > -->
+						
 						<!-- && user.user.id !== this.userStore.user.id"> -->
-						<v-list v-if="channel_types[selected_channel_type] !== 'direct'">  
-								<v-list-item>
-									<v-list-item-title>
-										<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
-										<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
-										<v-btn-group
-										color="secondary"
-										>
-											<v-btn value="1" @click="timedMuteUser(user, '1')">1</v-btn>
-											<v-btn value="10" @click="timedMuteUser(user, '10')">10</v-btn>
-											<v-btn value="60" @click="timedMuteUser(user, '60')">60</v-btn>
-										</v-btn-group>
-									</v-list-item-title>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-title>
-										<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
-									</v-list-item-title>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-title>
-										<v-btn v-if="!user.admin" type="submit" block @click="this.addAdmin(user)" color="primary">admin</v-btn>
-										<v-btn v-if="user.admin" type="submit" block @click="this.rmAdmin(user)" color="primary">unadmin</v-btn>
-									</v-list-item-title>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-title>
-										<v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn>
-									</v-list-item-title>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-title>
-										<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
-									</v-list-item-title>
-								</v-list-item>
-							</v-list>
-							<!-- </div> -->
-						</v-menu>
+						<v-list v-if="channel_types[selected_channel_type] !== 'direct' && user.user.id !==this.userStore.user.id">
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
+									<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
+									<v-btn-group
+									color="secondary"
+									>
+										<v-btn value="1" @click="timedMuteUser(user, '1')">1</v-btn>
+										<v-btn value="10" @click="timedMuteUser(user, '10')">10</v-btn>
+										<v-btn value="60" @click="timedMuteUser(user, '60')">60</v-btn>
+									</v-btn-group>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn v-if="!user.admin" type="submit" block @click="this.addAdmin(user)" color="primary">admin</v-btn>
+									<v-btn v-if="user.admin" type="submit" block @click="this.rmAdmin(user)" color="primary">unadmin</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+						</v-list>
+					</v-menu>
 				
-				<div v-if="this.room.type == 'private'" class="mr-2 mt-4">
+				<div v-if="this.room.type == 'private'" class="ma-2 mt-4">
 					<v-form @submit.prevent>
 						<v-autocomplete v-model="this.select_private_id" :items="this.users" item-title="username" item-value="id" label="Select user"></v-autocomplete>
 						<v-btn type="submit" block @click="this.privateAddUser()">Add</v-btn>

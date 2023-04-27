@@ -30,6 +30,7 @@ export default defineComponent({
 			const roomName = data.roomName;
 			this.gameStore.socket.emit("leaveRoom", { roomName });
 			this.gameStore.inGame = 0;
+			this.getRooms();
 		});
 	},
 

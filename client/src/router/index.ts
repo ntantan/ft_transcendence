@@ -5,6 +5,7 @@ import GameView from "../views/GameView.vue";
 import ChatView from "../views/ChatView.vue";
 import UserView from "../views/UserView.vue";
 import LoginView from "../views/LoginView.vue";
+import LeaderboardView from "../views/LeaderboardView.vue";
 import CustomGameView from "../views/CustomGameView.vue";
 import axios from "axios";
 import { userStore } from "@/stores/user";
@@ -65,9 +66,17 @@ const router = createRouter({
 		name: "login",
 		component: LoginView,
 		meta: {
-		  title: "Login"
+			title: "Login"
 		},
-	  },	
+	},
+	{
+		path: "/leaderboard",
+		name: "leaderboard",
+		component: LeaderboardView,
+		meta: {
+			title: "Leaderboard"
+		},
+	}
   ],
 });
 

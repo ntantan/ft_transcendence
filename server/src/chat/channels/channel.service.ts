@@ -1,4 +1,4 @@
-import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, GoneException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Channel } from "./entities/channel.entity";
 import { ArrayContainedBy, ArrayContains, FindOperator, In, Repository } from "typeorm";
@@ -8,6 +8,7 @@ import { User } from "src/users/entities/user.entity";
 import { Response } from "express";
 import { ChannelUser } from "./entities/channelUser.entity";
 import { UsersService } from "src/users/users.service";
+import { ChatModule } from "../chat.module";
 
 @Injectable()
 export class ChannelService
@@ -360,9 +361,19 @@ export class ChannelService
 	async rmUser(channel_id: string, user: User)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const messages = await this.messageRepository.find({where: [{channel: channel}]});
+		const channel_users = await this.channelUserRepository.find({where:[{channel: channel}]});
 		const channel_user = await this.findChannelUserByUser(channel, user.id);
 
-		this.channelUserRepository.remove(channel_user);
+		if (channel_user.channel_owner)
+		{
+			await this.messageRepository.remove(messages);
+			await this.channelUserRepository.remove(channel_users);
+			await this.channelRepository.remove(channel);
+			throw new GoneException('Channel owner has left the channel');
+		}
+		else
+			this.channelUserRepository.remove(channel_user);
 		return (await this.channelRepository.save(channel));
 	}
 

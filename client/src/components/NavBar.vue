@@ -32,5 +32,10 @@ export default defineComponent({
       <span>User</span>
       <v-icon>mdi-account</v-icon>
     </v-btn>
+
+    <v-btn value="leaderboard" to ="/leaderboard">
+      <span>Leaderboard</span>
+      <v-icon>mdi-trophy-variant</v-icon>
+    </v-btn>
   </v-bottom-navigation>
 </template>

@@ -111,11 +111,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		try { await this.channelService.rmUser(body.id, user); }
 		catch (error) {
-			// console.log(error);
 			client.emit('error', error);
+			this.server.emit('newRoom')
+			client.emit('channelRemoved');
 		}
 		this.chatService.leaveRoom(client, body.id);
-
 		this.server.emit('updateRoom');
 	}
 

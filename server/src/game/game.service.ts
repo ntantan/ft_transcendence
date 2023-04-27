@@ -8,12 +8,14 @@ import { Server, Socket } from 'socket.io';
 import { HistoryService } from './history.service';
 import { User } from 'src/users/entities/user.entity';
 import { Player } from './objects/Player';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class GameService {
 
 	constructor(private readonly historyService: HistoryService, 
 				private readonly schedulerRegistry: SchedulerRegistry,
+				private readonly userService: UsersService
 				) {}
 
 	//		CONTROLLER		//
@@ -74,6 +76,8 @@ export class GameService {
 			mod: '1',
 			player_1: "ia1",
 			player_2: "ia2",
+			player1_score: undefined,
+			player2_score: undefined,
 			end_status: null,
 		},
 		{
@@ -84,6 +88,8 @@ export class GameService {
 			mod: '3',
 			player_1: "ia1",
 			player_2: "ia2",
+			player1_score: undefined,
+			player2_score: undefined,
 			end_status: null,
 		},
 	];
@@ -164,6 +170,8 @@ export class GameService {
 		const create = await this.historyService.create({
 			"player1": roomcpy.player_1,
 			"player2": roomcpy.player_2,
+			"player1_score": roomcpy.player1_score,
+			"player2_score": roomcpy.player2_score,
 			"gamemod": roomcpy.mod,
 			"winner": roomcpy.end_status,
 			"date": new Date(),
@@ -171,6 +179,19 @@ export class GameService {
 
 		room.state = "ending";
 		server.to(room.name).emit("endGame", { roomName: room.name, endStatus: room.end_status });
+
+		const p1 = await this.userService.findOne(Number(roomcpy.player_1));
+		const p2 = await this.userService.findOne(Number(roomcpy.player_2));
+		if (roomcpy.end_status == "1")
+		{
+			this.userService.winUp(p1);
+			this.userService.loseUp(p2);
+		}
+		else
+		{
+			this.userService.loseUp(p1);
+			this.userService.winUp(p2);
+		}
 	}
 
 	createRoom(mod: number, type: string)
@@ -190,6 +211,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -203,6 +226,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -216,6 +241,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -247,14 +274,15 @@ export class GameService {
 		this.createInterval(server, find, find.name);
 	}
 
-	getPlayerSide(clientId: string, roomName: string)
+	getPlayerSide(clientId: string, room: Room)
 	{
-		var find = this.rooms.find((room) => room.name === roomName);
-		if (!find)
+		// var find = this.rooms.find((room) => room.name === roomName);
+		console.log("GPS", room)
+		if (!room)
 			return (0);
-		if (find.player_1 == clientId)
+		if (room.player_1 == clientId)
 			return (1);
-		if (find.player_2 == clientId)
+		if (room.player_2 == clientId)
 			return (2);
 	}
 
@@ -283,11 +311,7 @@ export class GameService {
 			console.log("room is full !");
 			return (null);
 		}
-
-		if (find.player_1 && find.player_2)
-			this.startMatch(server, find);
-			// this.createInterval(server, find, find.name);
-		return (find.name);
+		return (find);
 	}
 
 	leaveRoom(roomName: string, clientId: string)
@@ -363,12 +387,12 @@ export class GameService {
 				if (room.name === "ia room" || room.name === "ia room2")
 					room.game.ia_move();
 	
-				room.end_status = room.game.ball_move();
+				room.end_status = room.game.ball_move(room);
 				server.to(room.name).emit("position", room.game);
 				if (!room.player_1)
-					room.end_status = room.player_1 + " disconnected";
+					room.end_status = "2";
 				else if (!room.player_2)
-					room.end_status = room.player_2 + " disconnected";
+					room.end_status = "1";
 				if (room.end_status && room.name !== "ia room" && room.name !== "ia room2")
 				{
 					// if (room.end_status === "Player 1 Win")
