@@ -42,6 +42,13 @@ export default defineComponent({
             >
             </v-img>
           </v-avatar>
+          <v-avatar v-bind:size="avatar.size">
+            <v-img
+              alt="recarlie_avatar"
+              src="https://cdn.intra.42.fr/users/9d05cca6bc6620a14cd050125e5e7d9e/recarlie.jpg"
+            >
+            </v-img>
+          </v-avatar>
         </v-col>
 
         <v-spacer></v-spacer>
@@ -53,6 +60,7 @@ export default defineComponent({
 					<span>sojung</span>
 					<span>rsung</span>
 					<span>ntan</span>
+          <span>recarlie</span>
 					<span>42.</span>
 				</div>
 			</div>
@@ -88,8 +96,24 @@ export default defineComponent({
   position: absolute;
   top: 0;
   /* overflow: hidden; */
-  animation: animate 10s linear infinite;
+  animation: animate 15s linear infinite;
   opacity: 0;
+}
+
+.word span:nth-child(1) {
+  animation-delay: 0s;
+}
+.word span:nth-child(2) {
+  animation-delay: 3s;
+}
+.word span:nth-child(3) {
+  animation-delay: 6s;
+}
+.word span:nth-child(4) {
+  animation-delay: 9s;
+}
+.word span:nth-child(5) {
+  animation-delay: 12s;
 }
 
 @keyframes animate {
@@ -115,16 +139,5 @@ export default defineComponent({
   }
 }
 
-.word span:nth-child(1) {
-  animation-delay: 0s;
-}
-.word span:nth-child(2) {
-  animation-delay: 2s;
-}
-.word span:nth-child(3) {
-  animation-delay: 4s;
-}
-.word span:nth-child(4) {
-  animation-delay: 6s;
-}
+
 </style>
