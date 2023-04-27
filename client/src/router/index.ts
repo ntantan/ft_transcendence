@@ -6,6 +6,7 @@ import ChatView from "../views/ChatView.vue";
 import UserView from "../views/UserView.vue";
 import LoginView from "../views/LoginView.vue";
 import LeaderboardView from "../views/LeaderboardView.vue";
+import UserProfileView from "../views/UserProfileView.vue";
 import CustomGameView from "../views/CustomGameView.vue";
 import axios from "axios";
 import { userStore } from "@/stores/user";
@@ -53,14 +54,14 @@ const router = createRouter({
 		title: "User"
 	  },
     },
-	// {
-	// 	path: "/user/:id",
-	// 	name: "user",
-	// 	component: UserView,
-	// 	meta: {
-	// 	  title: "User"
-	// 	},
-	// },		
+	{
+	 	path: "/user/:id",
+	 	name: "user_profile",
+	 	component: UserProfileView,
+	 	meta: {
+	 	  title: "User Profile"
+	 	},
+	},		
 	{
 		path: "/login",
 		name: "login",
