@@ -312,7 +312,7 @@ export default defineComponent ({
 </script>
 
 <template>
-    <v-card width="1200" class="h-chat mx-auto ma-6">
+    <v-card width="1200" class="h-chat mx-auto ma-6" transition="fade-transition">
         <v-row>
             <v-col cols="3">
 
@@ -589,5 +589,7 @@ export default defineComponent ({
 .h-sub-options{
 	height: 40px;
 }
+
+$card-transition-duration: 5.0s;
 
 </style>
