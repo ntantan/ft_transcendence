@@ -9,6 +9,7 @@ import { Response } from "express";
 import { ChannelUser } from "./entities/channelUser.entity";
 import { UsersService } from "src/users/users.service";
 import { ChatModule } from "../chat.module";
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ChannelService
@@ -129,35 +130,77 @@ export class ChannelService
 	// Create one room
 	async createChannel(name: string, password: string, owner: User, type: string)
 	{
-		const newChannel = this.channelRepository.create({
-			name: name,
-			password: password,
-			type: type,
-		});
-		await this.channelRepository.save(newChannel);
 
-		const channel_user = this.channelUserRepository.create({
-			user: owner,
-			channel_owner: true,
-			admin: false,
-			banned: false,
-			muted: null,
-			channel: newChannel
-		});
-		await this.channelUserRepository.save(channel_user);
-		newChannel.channel_users = [channel_user];
+		if (password)
+		{
+			var saltRounds = 10;
+			await bcrypt.hash(password, saltRounds).then(async (hash) => {
+				var createChannel = {
+					name: name,
+					password: hash,
+					type: type,
+				}
+				var newChannel = this.channelRepository.create(createChannel);
+				await this.channelRepository.save(newChannel);
 
-		const a = await this.channelRepository.save(newChannel);
-		const newMessage = this.messageRepository.create({
-			message: "Welcome to " + name + " channel! It was created by ",
-			user: owner,
-			date: new Date(),
-			channel: newChannel
-		});
-		await this.messageRepository.save(newMessage);
-		newChannel.messages = [newMessage];
-	
-		return (await this.channelRepository.save(newChannel));
+				const channel_user = this.channelUserRepository.create({
+					user: owner,
+					channel_owner: true,
+					admin: false,
+					banned: false,
+					muted: null,
+					channel: newChannel
+				});
+				await this.channelUserRepository.save(channel_user);
+				newChannel.channel_users = [channel_user];
+		
+				const a = await this.channelRepository.save(newChannel);
+				const newMessage = this.messageRepository.create({
+					message: "Welcome to " + name + " channel!",
+					user: owner,
+					date: new Date(),
+					channel: newChannel
+				});
+				await this.messageRepository.save(newMessage);
+				newChannel.messages = [newMessage];
+				return (await this.channelRepository.save(newChannel));
+			})
+		}
+		else
+		{
+			var createChannel = {
+				name: name,
+				password: password,
+				type: type,
+			}
+			var newChannel = this.channelRepository.create(createChannel);
+			await this.channelRepository.save(newChannel);
+
+			const channel_user = this.channelUserRepository.create({
+				user: owner,
+				channel_owner: true,
+				admin: false,
+				banned: false,
+				muted: null,
+				channel: newChannel
+			});
+			await this.channelUserRepository.save(channel_user);
+			newChannel.channel_users = [channel_user];
+
+			if (type != "direct")
+			{
+				const a = await this.channelRepository.save(newChannel);
+				const newMessage = this.messageRepository.create({
+					message: "Welcome to " + name + " channel!",
+					user: owner,
+					date: new Date(),
+					channel: newChannel
+				});
+				await this.messageRepository.save(newMessage);
+				newChannel.messages = [newMessage];
+				return (await this.channelRepository.save(newChannel));
+			}
+		}
 	}
 
 	async createDirectChannel(user: User, other_user_id: number)
@@ -325,15 +368,18 @@ export class ChannelService
 		const channel = await this.findChannelById(channel_id);
 		// const user = await this.usersService.findOne(user_id);
 
-		const ch_pass = await this.channelRepository.findOne({
-			where: [{id: Number(channel_id)}],
-			select: {
-				password: true,
-			}
-		})
-
-		if (ch_pass.password && ch_pass.password !== password)
-			throw new UnauthorizedException("Wrong Password");
+		const ch_pass = await this.channelRepository
+				.createQueryBuilder('channel')
+				.where("channel.id = :id", {id: channel_id})
+				.addSelect("channel.password")
+				.getOne()
+		if (ch_pass.password)
+		{
+			await bcrypt.compare(password, ch_pass.password).then((result) => {
+				if (result == false)
+					throw new UnauthorizedException("Wrong Password");
+			})
+		}
 
 		let channel_user;
 		try {

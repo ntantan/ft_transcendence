@@ -61,7 +61,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		this.gameService.leaveAllRoom(client, this.server, String(user.id));
 		client._cleanup();
 		this.gameService.player_leave(String(user.id), client.id);
-		console.log(client.id, "disconnected");
+		// console.log(client.id, "disconnected");
 	}
 	
 	afterInit(server: any) {

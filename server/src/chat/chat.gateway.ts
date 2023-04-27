@@ -19,13 +19,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     handleConnection(@ConnectedSocket() client: Socket) 
 	{
-		console.log(client.id , "in the chat socket");	
+		// console.log(client.id , "in the chat socket");	
 	}
 
 	handleDisconnect(@ConnectedSocket() client: Socket)
 	{
 		client.disconnect();
-		console.log(client.id, " disconnect from chat socket")
+		// console.log(client.id, " disconnect from chat socket")
 	}
 	
     @SubscribeMessage('createRoom')
@@ -37,11 +37,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		try { await this.channelService.createChannel(body.room_name, body.password, user, body.room_type); }
 		catch (error) {
-			// console.log(error);
+			console.log(error);
 			client.emit('error', error);
 		}
 		this.server.emit('newRoom');
-		console.log("room " + body.room_name + " created");
+		// console.log("room " + body.room_name + " created");
     }
 
 	@SubscribeMessage('createDirectRoom')

@@ -436,13 +436,14 @@ export default defineComponent ({
 					
 					<v-hover v-slot="{ isHovering, props }">
 						<v-card
-						color="light-blue-lighten-4"
+						color="primary"
 						:elevation="isHovering ? 8 : 2"
 						:class="{ 'on-hover': isHovering }"
 						v-bind="props"
+						variant="outlined"
 						>
 						<template v-slot:title>
-							<v-avatar size="30">
+							<v-avatar size="30" class="mr-2">
 								<v-img :src="message.user.avatar"></v-img>
 							</v-avatar>
 							{{ message.user.username }}

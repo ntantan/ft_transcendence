@@ -71,7 +71,7 @@ export default defineComponent({
         <!-- <v-col cols="1" class="d-flex justify-center">
           <v-btn class="button">Sign in</v-btn>
         </v-col> -->
-        <v-col cols="2" class="d-flex justify-center">
+        <v-col cols="auto" class="d-flex justify-center">
           <v-btn v-if="!this.userStore.authenticated" color="primary" class="button" to="/login">Login</v-btn>
 		  <v-btn v-if="this.userStore.authenticated" color="primary" class="button" to="/login">Logged as {{ userStore.user.username }}</v-btn>
         </v-col>

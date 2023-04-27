@@ -39,10 +39,10 @@ export class GameService {
 
 		if (!find)
 		{
-			console.log(client.id, id, "connected to game socket");
+			// console.log(client.id, id, "connected to game socket");
 			return (this.player.push({id, socket_id}));
 		}
-		console.log(id, "already connected to game socket");
+		// console.log(id, "already connected to game socket");
 		client.disconnect();
 		return (null);
 	}
