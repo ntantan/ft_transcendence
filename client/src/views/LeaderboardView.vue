@@ -18,7 +18,7 @@
         <tr v-for="(player, index) in players" :key="player.id">
           <td>{{ index + 1 }}</td>
           <td><img :src="player.avatar" alt="Avatar" class="avatar"></td>
-          <td>{{ player.username }}</td>
+          <td><a :href="`/user/${player.id}`">{{ player.username }}</a></td>
           <td>{{ player.level }}</td>
           <td>{{ player.win }}</td>
           <td>{{ player.lose }}</td>
@@ -68,7 +68,7 @@
 				console.error('Erreur lors de la récupération des joueurs:', error);
 			}
 		},
-	};
+  }
   </script>
   
   <style scoped>
