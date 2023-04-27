@@ -5,6 +5,7 @@ import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
 import gamemod0 from "@/assets/screenshot_gamemod0.png";
+import axios from "axios";
 
 export default defineComponent({
 
@@ -36,9 +37,16 @@ export default defineComponent({
 
 	methods: {
 		async getRooms() {
-			const localhost = import.meta.env.VITE_LOCALHOST;
-			const response = await fetch(`http://${localhost}:3000/rooms`);
-			this.rooms = await response.json();
+			// const localhost = import.meta.env.VITE_LOCALHOST;
+			// const response = await fetch(`http://${localhost}:3000/rooms`);
+			// this.rooms = await response.json();
+			axios.get("http://localhost:3000/rooms", {withCredentials: true})
+				.then((response) => {
+					this.rooms = response.data;
+				})
+				.catch((error) => {
+					console.log(error);
+				})
 		},
 
 		test() 

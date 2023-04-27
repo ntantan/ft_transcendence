@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { Room } from './entities/room.entities';
 import { GameService } from './game.service';
 import { HistoryService } from './history.service';
@@ -13,16 +13,37 @@ export class GameController {
 	{};
 
 	@Get('rooms')
-	getRooms(): Room[] 
+	async getRooms(@Req() req)
 	{
+		if (!req.cookies['jwt'])
+			throw new BadRequestException('No jwt provided');
+		const user = await this.authService.verifyJwt(req.cookies['jwt']);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
 		return (this.gameService.findAllGame());
 	}
 
 	@Get('history')
 	async getHistory(@Req() req) 
 	{
-		// const user = await this.authService.verifyJwt(req.cookies['jwt']);
-		// replace by find history with matching user
+		if (!req.cookies['jwt'])
+			throw new BadRequestException('No jwt provided');
+		const user = await this.authService.verifyJwt(req.cookies['jwt']);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+
 		return (this.historyService.findAll());
+	}
+
+	@Get('history/:id')
+	async getHistoryById(@Param('id') id: string, @Req() req) 
+	{
+		if (!req.cookies['jwt'])
+			throw new BadRequestException('No jwt provided');
+		const user = await this.authService.verifyJwt(req.cookies['jwt']);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+
+		return (this.historyService.findByUserId(id));
 	}
 }
