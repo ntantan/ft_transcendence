@@ -160,9 +160,9 @@ export class Game
 	check_game_status()
 	{
 		if (this.p1_score >= 2)
-			return ("Player 1 Win");
+			return ("1");
 		if (this.p2_score >= 2)
-			return ("Player 2 Win");
+			return ("2");
 	}
 
 	randomDirection() {

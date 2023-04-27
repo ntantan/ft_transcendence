@@ -366,9 +366,9 @@ export class GameService {
 				room.end_status = room.game.ball_move();
 				server.to(room.name).emit("position", room.game);
 				if (!room.player_1)
-					room.end_status = room.player_1 + " disconnected";
+					room.end_status = "2";
 				else if (!room.player_2)
-					room.end_status = room.player_2 + " disconnected";
+					room.end_status = "1";
 				if (room.end_status && room.name !== "ia room" && room.name !== "ia room2")
 				{
 					// if (room.end_status === "Player 1 Win")

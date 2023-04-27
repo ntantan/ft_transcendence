@@ -69,6 +69,10 @@ export default defineComponent ({
 		this.socket.on('updateRoom', () => {
 			this.fetchRoom();
 		})
+
+		this.socket.on('channelRemoved', () => {
+			this.fetchAllRooms();
+		})
     },
 
     watch: {
@@ -89,6 +93,7 @@ export default defineComponent ({
 			const find = this.channels.find((channel) => channel.id == this.selectedChannel);
 			if (find)
 				return (find.name);
+			return (null);
 		}
 	},
 
@@ -150,7 +155,7 @@ export default defineComponent ({
         fetchRoom() {
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
-                console.log(response.data);
+                // console.log(response.data);
 				this.isJoined = true;
                 this.room = response.data;
 				this.socket.emit('joinSocket', {
@@ -177,9 +182,12 @@ export default defineComponent ({
 
 		// Create a direct mesage room
 		createDirectRoom() {
-			this.socket.emit('createDirectRoom', {
-				user_id: this.select_direct_id,
-			})
+			if (this.select_direct_id)
+			{
+				this.socket.emit('createDirectRoom', {
+					user_id: this.select_direct_id,
+				})
+			}
 		},
 
 		joinRoom() {
@@ -197,10 +205,13 @@ export default defineComponent ({
 
 		//  Add user to a private room
 		privateAddUser() {
-			this.socket.emit('addUserPrivate', {
-				id: this.selectedChannel,
-				user_id: this.select_private_id
-			})
+			if (this.select_private_id)
+			{
+				this.socket.emit('addUserPrivate', {
+					id: this.selectedChannel,
+					user_id: this.select_private_id
+				})
+			}
 		},
 
         clearTextArea() {
@@ -375,20 +386,20 @@ export default defineComponent ({
 
 				<v-card class="h-options mx-auto">
 
-					<v-row v-if="!isJoined && selectedChannel">
+					<v-row v-if="!isJoined && selectedRoomname">
 						<v-col class="ma-2" align-self="center" cols="5">
 							<v-card-title>{{ selectedRoomname }}</v-card-title>
 						</v-col>
 						<div v-if="this.channel_types[this.selected_channel_type] == 'public'">
-						<v-col class="mr-3"  cols="4" align-self="center">
-							<v-text-field
-								style="width: 200px;"
-								v-model="roomPassword"
-								label="Leave empty if not required"
-								variant="underlined"
-								clearable>
-							</v-text-field>
-						</v-col>
+							<v-col class="mr-3"  cols="4" align-self="center">
+								<v-text-field
+									style="width: 200px;"
+									v-model="roomPassword"
+									label="Leave empty if not required"
+									variant="underlined"
+									clearable>
+								</v-text-field>
+							</v-col>
 							<v-col align-self="center">
 								<v-btn width="100" color="primary" @click="joinRoom()">Join</v-btn>
 							</v-col>
