@@ -352,7 +352,7 @@ export default defineComponent ({
 						</v-window-item>
 					</v-window>
 
-					<v-card height="700" class="scroll my-3">
+					<v-card height="700" class="scroll my-2">
 						<v-item-group v-model="selectedChannel">
 							<v-item v-for="channel in channels" :value="channel.id" v-slot="{isSelected, selectedClass, toggle}">
 								<v-card :class="['d-flex pa-3', selectedClass]" @click="toggle">

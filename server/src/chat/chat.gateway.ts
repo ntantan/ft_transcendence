@@ -37,7 +37,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		try { await this.channelService.createChannel(body.room_name, body.password, user, body.room_type); }
 		catch (error) {
-			console.log(error);
+			// console.log(error);
 			client.emit('error', error);
 		}
 		this.server.emit('newRoom');
@@ -53,7 +53,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		try { await this.channelService.createDirectChannel(user, body.user_id); }
 		catch (error) {
-			console.log(error);
+			// console.log(error);
 			client.emit('error', error);
 		}
 		this.server.emit('newRoom');

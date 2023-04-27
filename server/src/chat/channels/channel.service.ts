@@ -198,8 +198,8 @@ export class ChannelService
 				});
 				await this.messageRepository.save(newMessage);
 				newChannel.messages = [newMessage];
-				return (await this.channelRepository.save(newChannel));
 			}
+			return (await this.channelRepository.save(newChannel));
 		}
 	}
 
