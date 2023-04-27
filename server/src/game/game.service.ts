@@ -62,8 +62,9 @@ export class GameService {
 			return;
 		console.log(find.socket_id)
 		// cannot send to itself
-		// server.to(find.socket_id).emit('gameInvite', {room_name: room_name});
-		server.emit('gameInvite', {room_name: room_name, inviter: user.username});
+		server.to(find.socket_id).emit('gameInvite', {room_name: room_name, inviter: user.username});
+		// server.sockets.adapter.
+		// server.emit('gameInvite', {room_name: room_name, inviter: user.username});
 	}
 
 	//		ROOMS		//
@@ -191,6 +192,18 @@ export class GameService {
 		{
 			this.userService.loseUp(p1);
 			this.userService.winUp(p2);
+		}
+		this.checkLevelUp(p1);
+		this.checkLevelUp(p2);
+	}
+
+	checkLevelUp(user: User)
+	{
+		let i = 0;
+		while (user.win * 2 + user.lose >= user.level * 3 && i < 5)
+		{
+			this.userService.levelUp(user)
+			i++;
 		}
 	}
 

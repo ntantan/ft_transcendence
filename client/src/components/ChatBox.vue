@@ -41,13 +41,6 @@ export default defineComponent ({
             messageText: "",
 			
 			roomPassword: "",
-			rules: [
-				value => {
-					if (value && value.length < 20)
-						return (true)
-					return ("Field can not be empty")
-				}
-			],
 
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
@@ -67,7 +60,8 @@ export default defineComponent ({
         })
 
 		this.socket.on('updateRoom', () => {
-			this.fetchRoom();
+			if (this.selectedChannel)
+				this.fetchRoom();
 		})
 
 		this.socket.on('channelRemoved', () => {
@@ -165,8 +159,8 @@ export default defineComponent ({
             .catch((error) => {
 				this.room = {};
 				this.isJoined = false;
-				this.sendSnackbar(error.response.data.message);
-                // console.log(error);
+				// this.sendSnackbar(error.response.data.message);
+                console.log(error);
             })
         },
 
@@ -176,7 +170,8 @@ export default defineComponent ({
             this.socket.emit('createRoom', {room_name: this.roomName,
 											password: this.passWord, 
 											room_type: this.channel_types[this.selected_channel_type]});
-            this.clearTextArea();
+            // this.clearTextArea();
+			this.roomName = "";
             window.scrollTo(0, document.body.scrollHeight);
         },
 
@@ -284,6 +279,11 @@ export default defineComponent ({
 			
 		},
 
+		blockUser(channel_user: any)
+		{
+
+		},
+
 		sendSnackbar(msg: string)
 		{
 			this.snackbar_text = msg;
@@ -298,6 +298,12 @@ export default defineComponent ({
 				this.channels = this.private_channels;
 			else if (this.channel_types[this.selected_channel_type] == "direct")
 				this.channels = this.direct_channels;
+		},
+
+		strToDate(strdate: string)
+		{
+			const current = new Date(Date.parse(strdate));
+			return (current.toLocaleString("fr"))
 		},
 
 		mergeProps,
@@ -341,7 +347,7 @@ export default defineComponent ({
 						:key="n"
 						>
 						<v-card height="50px" class="d-flex justify-center align-center">
-							<span>{{ channel_types[selected_channel_type] }}</span>
+							<h3>{{ channel_types[selected_channel_type] }}</h3>
 						</v-card>
 						</v-window-item>
 					</v-window>
@@ -420,18 +426,39 @@ export default defineComponent ({
 					</v-row>
 
 				</v-card>
-				<v-card class="h-message my-2 scroll">
-					<v-list>
-                        <!-- <ul v-for="message in this.room.messages" :key="message">
-                            <li> -->
-                                <!-- mise en page messages -->
-								<v-card width="200" v-for="message in this.room.messages" style="overflow-wrap: break-word;">
-									{{ message.date }}
-									{{ message.message }}
-								</v-card>
-                            <!-- </li>
-                        </ul> -->
-					</v-list>
+				<v-card class="h-message my-2 scroll pa-2">
+					<v-card 
+					v-for="message in this.room.messages" 
+					width="550"
+					style="overflow-wrap: break-word;"  
+					class="ma-2"
+					>
+					
+					<v-hover v-slot="{ isHovering, props }">
+						<v-card
+						color="light-blue-lighten-4"
+						:elevation="isHovering ? 8 : 2"
+						:class="{ 'on-hover': isHovering }"
+						v-bind="props"
+						>
+						<template v-slot:title>
+							<v-avatar size="30">
+								<v-img :src="message.user.avatar"></v-img>
+							</v-avatar>
+							{{ message.user.username }}
+						</template>
+
+						<v-card-text>
+							<div style="overflow-wrap: break-word;">
+								{{ message.message }}
+							</div>
+							<div v-if="isHovering" style="float: right; overflow-wrap: break-word;" >
+								{{ strToDate(message.date) }}
+							</div>
+						</v-card-text>
+						</v-card>
+					</v-hover>
+					</v-card>
 				</v-card>
 
 				<v-text-field v-model="messageText" label="Enter your message here" @keydown.enter="SubmitNewMessage()">						
@@ -440,7 +467,7 @@ export default defineComponent ({
 
             <v-col cols="3">
                 <v-card class="h-chat scroll">
-                    <h2 class="d-flex justify-center">User</h2>
+                    <h2 class="d-flex justify-center">Users</h2>
 
 					<v-menu v-for="user in this.room.channel_users" :key="user">
 						<template v-slot:activator="{ props: menu }">
@@ -485,6 +512,11 @@ export default defineComponent ({
 							<v-list-item>
 								<v-list-item-title>
 									<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.blockUser(user)" color="red">Block</v-btn>
 								</v-list-item-title>
 							</v-list-item>
 						</v-list>

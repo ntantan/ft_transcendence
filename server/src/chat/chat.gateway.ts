@@ -214,4 +214,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		this.server.emit('updateRoom');
 	}
+
+	@SubscribeMessage('blockUser')
+	async blockUser(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	{
+		const user = await this.chatService.get_ws_user(client);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+		
+		try { }
+		catch (error) {
+			// console.log(error);
+			client.emit('error', error);
+		}
+	}
 }

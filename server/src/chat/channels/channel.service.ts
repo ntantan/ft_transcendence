@@ -1,7 +1,7 @@
 import { ForbiddenException, GoneException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Channel } from "./entities/channel.entity";
-import { ArrayContainedBy, ArrayContains, FindOperator, In, Repository } from "typeorm";
+import { ArrayContainedBy, ArrayContains, FindOperator, In, Not, Repository } from "typeorm";
 import { Messages } from "./entities/messages.entity";
 import { WsException } from "@nestjs/websockets";
 import { User } from "src/users/entities/user.entity";
@@ -33,10 +33,15 @@ export class ChannelService
 	async getChannel(id: string, user: User)
 	{
 		const channel = await this.channelRepository.findOne({
-			where: [{id: Number(id)}],
+			where: [{
+				id: Number(id),
+				messages: {
+					user: Not(In(user.blocked)),
+				}
+			}],
 			relations: {
 				channel_users: {
-					user: true,
+					user: true
 				},
 				messages: {
 					user: true

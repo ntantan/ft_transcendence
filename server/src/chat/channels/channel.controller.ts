@@ -72,7 +72,6 @@ export class ChannelController
 	{
 		if (!req.cookies['jwt'])
 			throw new BadRequestException('No jwt provided');
-
 		const user = await this.authService.verifyJwt(req.cookies['jwt']);
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
