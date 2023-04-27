@@ -76,6 +76,8 @@ export class GameService {
 			mod: '1',
 			player_1: "ia1",
 			player_2: "ia2",
+			player1_score: undefined,
+			player2_score: undefined,
 			end_status: null,
 		},
 		{
@@ -86,6 +88,8 @@ export class GameService {
 			mod: '3',
 			player_1: "ia1",
 			player_2: "ia2",
+			player1_score: undefined,
+			player2_score: undefined,
 			end_status: null,
 		},
 	];
@@ -166,6 +170,8 @@ export class GameService {
 		const create = await this.historyService.create({
 			"player1": roomcpy.player_1,
 			"player2": roomcpy.player_2,
+			"player1_score": roomcpy.player1_score,
+			"player2_score": roomcpy.player2_score,
 			"gamemod": roomcpy.mod,
 			"winner": roomcpy.end_status,
 			"date": new Date(),
@@ -205,6 +211,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -218,6 +226,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -231,6 +241,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -375,7 +387,7 @@ export class GameService {
 				if (room.name === "ia room" || room.name === "ia room2")
 					room.game.ia_move();
 	
-				room.end_status = room.game.ball_move();
+				room.end_status = room.game.ball_move(room);
 				server.to(room.name).emit("position", room.game);
 				if (!room.player_1)
 					room.end_status = "2";

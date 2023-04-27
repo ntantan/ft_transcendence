@@ -11,5 +11,7 @@ export class Room {
 	mod: string;
 	player_1: string;
 	player_2: string;
+	player1_score: string;
+	player2_score: string;
 	end_status: string;
 }

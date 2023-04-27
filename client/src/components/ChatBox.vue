@@ -446,7 +446,7 @@ export default defineComponent ({
 						<template v-slot:activator="{ props: menu }">
 							<v-tooltip>
 								<template v-slot:activator="{ props: tooltip }">
-									<v-btn color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn> 
+									<v-btn color="primary" v-bind="mergeProps(menu, tooltip)" class="d-flex ma-2">{{ user.user.username }}</v-btn> 
 								</template>
 							</v-tooltip>
 						</template>
@@ -490,7 +490,7 @@ export default defineComponent ({
 						</v-list>
 					</v-menu>
 				
-				<div v-if="this.room.type == 'private'" class="mr-2 mt-4">
+				<div v-if="this.room.type == 'private'" class="ma-2 mt-4">
 					<v-form @submit.prevent>
 						<v-autocomplete v-model="this.select_private_id" :items="this.users" item-title="username" item-value="id" label="Select user"></v-autocomplete>
 						<v-btn type="submit" block @click="this.privateAddUser()">Add</v-btn>

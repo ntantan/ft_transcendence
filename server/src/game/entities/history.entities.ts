@@ -11,6 +11,12 @@ export class History {
 	@Column()
 	player2: string;
 
+	@Column({nullable: true})
+	player1_score: string;
+
+	@Column({nullable: true})
+	player2_score: string;
+
 	@Column()
 	winner: string;
 
