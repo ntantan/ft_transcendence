@@ -32,7 +32,8 @@ export class CreateUserDto {
     @IsNotEmpty()
     readonly two_fa: boolean;
 
-    @IsNotEmpty()
+    // @IsNotEmpty()
+    @IsString()
     readonly secret: string;
 
     @IsNotEmpty()

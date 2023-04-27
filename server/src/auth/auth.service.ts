@@ -95,6 +95,10 @@ export class AuthService {
         if (jwt) {
             let user = await this.verifyJwt(jwt).catch((err) => {console.log(err);});
             if (user) {
+                // verify 2fa auth
+                if (user.two_fa) {
+                    
+                }
                 user = await this.toggleStatus(user.id, Status.ONLINE).catch((err) => {console.log(err);});
                 res.send("logged in successfully");
                 return user;

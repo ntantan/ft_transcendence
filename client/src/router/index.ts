@@ -1,3 +1,4 @@
+import { authenticator } from 'otplib';
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import GameView from "../views/GameView.vue";
@@ -75,6 +76,9 @@ router.beforeEach(async (to, from) => {
 		 .then((response) => {
 			userStore.authenticated = true;
 			userStore.user = response.data;
+			if (userStore.user.two_fa && !userStore.twoFactorAuthenticated && to.name!== 'login')
+				return ({ name : "login"})
+			userStore.twoFactorAuthenticated = true;
 		 })
 		 .catch((error) => {
 			userStore.authenticated = false;

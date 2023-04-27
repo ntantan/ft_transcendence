@@ -26,8 +26,19 @@ export default defineComponent({
     },
 
     methods: {
-        async removeFriend(userId: number) {
+        async deleteFriend(userId: number) {
             console.log("remove friend", userId);
+            const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/deleteFriend/" + userId, {
+                method: "POST",
+                credentials: "include",
+            });
+            const data = await res.json();
+            if(data.error) {
+                console.log(data.error);
+                return;
+            }
+            userStore.updateUser(data);
+            this.friends = await this.getFriends();
         },
         async sendDm(userId: number) {
             console.log("send dm", userId);
@@ -43,7 +54,6 @@ export default defineComponent({
         },
         async block(userId: number) {
             console.log("block", userId);
-            // TODO : add new route to block user
             const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/block/" + userId, {
                 method: "POST",
                 credentials: "include",
@@ -106,7 +116,7 @@ export default defineComponent({
                                 <v-spacer></v-spacer>
                                 <v-card-actions>
                                     <v-btn size="small" variant="text" title="Remove from friend" icon="mdi-delete"
-                                        @click="removeFriend(friend.id)"></v-btn>
+                                        @click="deleteFriend(friend.id)"></v-btn>
                                     <v-btn size="small" variant="text" title="Send direct message" icon="mdi-send"
                                         @click="sendDm(friend.id)"></v-btn>
                                     <v-btn size="small" variant="text" title="See stats" icon="mdi-scoreboard"

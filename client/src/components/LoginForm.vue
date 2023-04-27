@@ -2,12 +2,16 @@
 import { defineComponent } from 'vue';
 import { userStore } from '@/stores/user';
 import axios from "axios";
+import TwoFactorAuthInput from './user/TwoFactorAuthInput.vue';
 
 const localhost = import.meta.env.VITE_LOCALHOST;
 const login_url = `http://localhost:3000/auth/login`;
 
 export default defineComponent ({
 	
+	components: {
+		TwoFactorAuthInput,
+	},
 	data() 
 	{
 		return {
@@ -20,6 +24,7 @@ export default defineComponent ({
 		submitLogin()
 		{
 			const url = login_url;
+			console.log(this.userStore.user.two_fa);
 			window.open("http://localhost:3000/auth/login");
 			setTimeout(() => {location.reload()}, 1000);
 		},
@@ -29,6 +34,17 @@ export default defineComponent ({
 			const url = login_url;
 			window.open("http://localhost:3000/auth/logout");
 			setTimeout(() => {location.reload()}, 1000);
+		},
+
+		cancelTwoFactorAuth()
+		{
+			this.userStore.twoFactorAuthenticated = false;
+			this.userStore.authenticated = false;
+		},
+
+		verified() 
+		{
+			this.userStore.twoFactorAuthenticated = true;
 		},
 	},
 });
@@ -51,7 +67,7 @@ export default defineComponent ({
 					</v-row>
 				</div>
 
-				<div v-if="this.userStore.authenticated" class="fill-height align-center justify-center">
+				<div v-if="this.userStore.authenticated && this.userStore.twoFactorAuthenticated" class="fill-height align-center justify-center">
 						<v-row justify="center">
 							<v-card-subtitle>
 								You are logged as {{ userStore.user.username }}
@@ -61,6 +77,10 @@ export default defineComponent ({
 						<v-row justify="center" class="pa-4">
 							<v-btn color="red" @click="submitLogout()">Sign out</v-btn>
 						</v-row>
+				</div>
+
+				<div v-if="this.userStore.authenticated && !this.userStore.twoFactorAuthenticated" class="fill-height align-center justify-center">
+					<component is="twoFactorAuthInput" @cancel="cancelTwoFactorAuth" @verified="verified" />
 				</div>
 
 			</v-card>

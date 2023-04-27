@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { Friend } from './entities/friend.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -69,7 +69,6 @@ export class UsersService {
                 updateUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
             ));
         const user = await this.userRepository.preload({
-            //username: (await this.findOne(id)).username,
             id: id,
             ...updateUserDto,
             friends,
@@ -78,7 +77,11 @@ export class UsersService {
         if (!user) {
             throw new NotFoundException(`User #${id} not found`);
         }
-        return this.userRepository.save(user);
+        try {
+            return this.userRepository.save(user);
+        } catch (error) {
+            throw error;
+        }
     }
 
     async updateAvatar(fileName: string, id: number) {
@@ -110,28 +113,34 @@ export class UsersService {
             friend.userId = friendAsUser.id;
             this.friendRepository.save(friend);
         }
-        user.friends.push(friend);
+        if (user.friends.find(oldFriend => oldFriend.userId === friendId) === undefined)
+            user.friends.push(friend);
         return await this.userRepository.save(user);
     }
 
     async blockUser(id: number, friendId: number): Promise<User> {
-        const user = await this.findOne(id);
-        const blockedAsUser = await this.findOne(friendId);
+        const user = await this.deleteFriend(id, friendId);
+        let blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
+        if (!blocked) {
+            blocked = new Blocked();
+            blocked.userId = friendId;
+            this.blockedRepository.save(blocked);
+        }
+        user.blocked.push(blocked);
+        return await this.userRepository.save(user);
+    }
 
-        if (!user || !blockedAsUser) {
+    async deleteFriend(id: number, friendId: number): Promise<User> {
+        const user = await this.findOne(id);
+        const friendToDelete = await this.findOne(friendId);
+
+        if (!user || !friendToDelete) {
             throw new NotFoundException(`User(s) not found`);
         }
         const friend = await this.friendRepository.findOne({ where: [{ userId: friendId }] });
         if (friend) {
             user.friends = user.friends.filter(friend => friend.userId !== friendId);
         }
-        let blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
-        if (!blocked) {
-            blocked = new Blocked();
-            blocked.userId = blockedAsUser.id;
-            this.blockedRepository.save(blocked);
-        }
-        user.blocked.push(blocked);
         return await this.userRepository.save(user);
     }
 

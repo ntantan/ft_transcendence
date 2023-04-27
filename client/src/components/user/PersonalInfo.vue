@@ -10,6 +10,7 @@ export default defineComponent({
             userStore,
             URL: "http://localhost:3000/users/avatar/",
             nameEdit: false,
+            tmpName: "",
 		};
 	},
     
@@ -18,7 +19,7 @@ export default defineComponent({
             return userStore.user;
         },
         userAvatar() {
-            return this.user.avatar;
+            return userStore.user.avatar;
         }
     },
 
@@ -61,10 +62,16 @@ export default defineComponent({
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    username: this.user.username,
+                    username: this.tmpName,
                 }),
-            }).catch((err) => {
-                console.log(err);
+            }).catch((error) => {
+                console.log(error);
+                if (error.response)
+                {
+                    console.log(error.response.data);
+                    this.tmpName = "";
+                }
+                return ;
             });
             this.userStore.updateUserName(this.user.username);
         },
@@ -99,7 +106,7 @@ export default defineComponent({
             </v-card-title>
             <v-card-text>
                 <v-form>
-                    <v-text-field label="New username" v-model="user.username" required @keydown.enter.prevent="changeUsername"></v-text-field>
+                    <v-text-field label="New username" v-model="tmpName" required @keydown.enter.prevent="changeUsername"></v-text-field>
                     <v-btn color="primary" @click.stop="changeUsername">Save</v-btn>
                 </v-form>
             </v-card-text>

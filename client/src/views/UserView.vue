@@ -108,6 +108,6 @@ export default defineComponent({
 
 <style>
   .main {
-    height : 800px;
+    height : 1000px;
   }
 </style>

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query, Request, UseGuards, UseInterceptors, UploadedFile, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, Request, UseGuards, UseInterceptors, UploadedFile, StreamableFile, HttpException, HttpStatus } from '@nestjs/common';
 import { Res } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -37,8 +37,22 @@ export class UsersController {
     // put : replaces all the resource
     // patch : modifies partially
     @Patch(':id')
-    update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
-        return this.usersService.update(id, updateUserDto);
+    async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto, @Res() res: Response) {
+        try {
+            const user = await this.usersService.update(id, updateUserDto);
+            return user;
+        } catch(error) {
+            if (error.code === '23505') {
+                // Unique constraint violation (duplicate username value)
+                throw new HttpException(
+                  'Username already exists',
+                  HttpStatus.CONFLICT,
+            );} else {
+                throw new HttpException(
+                  'Something went wrong',
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+            );}
+        }
     }
 
     @Post('/avatar/:id')
@@ -46,11 +60,9 @@ export class UsersController {
     async updateAvatar(@UploadedFile() file: Express.Multer.File, @Param('id') id: number) {
         await fs.writeFileSync(process.cwd() + "/public/" + file.originalname, file.buffer);
         return await this.usersService.updateAvatar(file.originalname, id);
-        //https://github.dev/oumeimatt/ft_transcendence/tree/main/src/frontend/src
-        //settings/avatar
     }
 
-    @Post(':id/friends/:friendId')
+    @Post(':id/addFriend/:friendId')
     async addFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
         return await this.usersService.addFriend(id, friendId);
     }
@@ -58,6 +70,13 @@ export class UsersController {
     @Post(':id/block/:blockedId')
     async blockUser(@Param('id') id: number, @Param('blockedId') blockedId: number): Promise<User> {
         return await this.usersService.blockUser(id, blockedId);
+    }
+
+    //@Post(':id/unblock/:blockedId')
+
+    @Post(':id/deleteFriend/:friendId')
+    async deleteFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
+        return await this.usersService.deleteFriend(id, friendId);
     }
 
     @Get('/avatar/:filename')

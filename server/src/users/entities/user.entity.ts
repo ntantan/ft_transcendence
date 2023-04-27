@@ -8,7 +8,7 @@ export class User {
     @PrimaryGeneratedColumn() // auto-increment the values
     id: number;
 
-    @Column()
+    @Column({ unique: true })
     username: string;
 
     @Column()
