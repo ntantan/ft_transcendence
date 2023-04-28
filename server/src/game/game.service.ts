@@ -192,6 +192,7 @@ export class GameService {
 	{
 		if (room.state === "ending")
 			return;
+		room.state = "ending";
 
 		const roomcpy = Object.assign({}, room);
 		const create = await this.historyService.create({
@@ -204,7 +205,6 @@ export class GameService {
 			"date": new Date(),
 		});
 
-		room.state = "ending";
 		server.to(room.name).emit("endGame", { roomName: room.name, endStatus: room.end_status });
 
 		const p1 = await this.userService.findOne(Number(roomcpy.p1_copy));

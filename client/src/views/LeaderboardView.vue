@@ -1,7 +1,7 @@
 <template>
 	<div class="leaderboard-page">
-	  <h1>Classement des joueurs</h1>
-	  <h2>Découvrez nos 10 meilleurs joueurs !</h2>
+	  <h1>Leaderboard</h1>
+	  <br>
 	  <table>
       <thead>
         <tr>

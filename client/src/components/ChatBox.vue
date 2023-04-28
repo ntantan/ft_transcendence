@@ -313,7 +313,8 @@ export default defineComponent ({
 </script>
 
 <template>
-    <v-card width="1200" class="h-chat mx-auto ma-6" transition="fade-transition">
+	<v-responsive>
+    <v-card width="auto" class="h-chat ma-6" transition="fade-transition">
         <v-row>
             <v-col cols="3">
 
@@ -427,10 +428,9 @@ export default defineComponent ({
 					</v-row>
 
 				</v-card>
-				<v-card class="h-message my-2 scroll pa-2">
+				<v-card class="h-message my-2 scroll pa-2 w-90">
 					<v-card 
-					v-for="message in this.room.messages" 
-					width="550"
+					v-for="message in this.room.messages"
 					style="overflow-wrap: break-word;"  
 					class="ma-2"
 					>
@@ -534,7 +534,7 @@ export default defineComponent ({
             </v-col>
         </v-row>
     </v-card>
-
+	</v-responsive>
 	<!-- error bar -->
 	<div class="text-center">
 		<v-snackbar
