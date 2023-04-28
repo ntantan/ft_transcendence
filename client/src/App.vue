@@ -5,12 +5,13 @@ import { io } from "socket.io-client";
 import BannerBar from "./components/BannerBar.vue";
 import NavBar from "./components/NavBar.vue";
 
-import { gameStore } from "./stores/game";
+import { gameStore, useGameStore } from "./stores/game";
 import { chatStore } from "./stores/chat";
 import router from "./router";
 
 export default defineComponent({
 	name: "App",
+
 
 	components: {
 		BannerBar,
@@ -29,6 +30,7 @@ export default defineComponent({
 		return {
 			gameStore,
 			chatStore,
+			piniaGameStore: useGameStore(),
 
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
@@ -44,9 +46,12 @@ export default defineComponent({
 
 	created() {
 		const localhost = import.meta.env.VITE_LOCALHOST; // ${localhost}
+			
+		// console.log(this.piniaGameStore.socket)
 		this.gameStore.socket = io(`http://localhost:3000/game`, { withCredentials: true });
+		// this.piniaGameStore.setSocket(this.gameStore.socket);
 
-		this.chatStore.socket = io(`http://localhost:3000/chat`, { withCredentials: true })
+		this.chatStore.socket = io(`http://localhost:3000/chat`, { withCredentials: true });
 	},
 
 	mounted() {
@@ -56,7 +61,11 @@ export default defineComponent({
 			this.sendSnackbar(response.message);
 		});
 
+		this.gameStore.socket.on('error', (response) => {
+			this.sendSnackbar(response.message);
+		})
 		this.gameStore.socket.on('gameInvite', (response) => {
+			console.log("test")
 			this.sendInviteBar("You received an invitation to play from " + response.inviter);
 			this.invite_room = response.room_name;
 			this.invite_player = response.inviter;

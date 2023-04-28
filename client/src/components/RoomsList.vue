@@ -156,11 +156,11 @@ export default defineComponent({
 		</v-col>
 	</v-row>
 
-	<v-row v-if="!this.gameStore.inGame" justify="center">
+	<!-- <v-row v-if="!this.gameStore.inGame" justify="center">
 		<v-col cols="auto pa-8">
 			<HistoryDialog />
 		</v-col>
-	</v-row>
+	</v-row> -->
 
 	<div v-if="!this.gameStore.inGame">
 		<v-row wrap>
