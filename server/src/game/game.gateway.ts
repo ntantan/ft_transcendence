@@ -93,7 +93,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		client.join(room.name);
 		this.gameService.startMatch(this.server, room);
 		const player_side = this.gameService.getPlayerSide(String(user.id), room);
-		this.gameService.send_invitation(this.server, data.invite_id, room.name, user);
+		this.gameService.send_invitation(client, this.server, data.invite_id, room.name, user);
 		return ({ player_side: player_side, roomName: room.name });
 	}
 

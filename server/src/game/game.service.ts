@@ -39,7 +39,7 @@ export class GameService {
 
 		if (!find)
 		{
-			// console.log(client.id, id, "connected to game socket");
+			console.log(client.id, id, "connected to game socket");
 			return (this.player.push({id, socket_id}));
 		}
 		// console.log(id, "already connected to game socket");
@@ -55,16 +55,17 @@ export class GameService {
 			this.player.splice((this.player.indexOf(find)), 1);
 	}
 
-	send_invitation(server: Server, id: string, room_name: string, user: User)
+	send_invitation(client: Socket, server: Server, id: string, room_name: string, user: User)
 	{
 		const find = this.player.find((player) => player.id == id);
 		if (!find)
+		{
+			client.emit("error", {message: "User is disconnected, leave and try again."})
 			return;
-		console.log(find.socket_id)
-		// cannot send to itself
+		}
+		console.log(find.socket_id);
+		console.log(room_name, user.username);
 		server.to(find.socket_id).emit('gameInvite', {room_name: room_name, inviter: user.username});
-		// server.sockets.adapter.
-		// server.emit('gameInvite', {room_name: room_name, inviter: user.username});
 	}
 
 	//		ROOMS		//
@@ -77,6 +78,8 @@ export class GameService {
 			mod: '1',
 			player_1: "ia1",
 			player_2: "ia2",
+			p1_copy: "",
+			p2_copy: "",
 			player1_score: undefined,
 			player2_score: undefined,
 			end_status: null,
@@ -89,6 +92,8 @@ export class GameService {
 			mod: '3',
 			player_1: "ia1",
 			player_2: "ia2",
+			p1_copy: "",
+			p2_copy: "",
 			player1_score: undefined,
 			player2_score: undefined,
 			end_status: null,
@@ -150,7 +155,8 @@ export class GameService {
 	{
 		if (room.player_1 && room.player_2)
 		{
-
+			room.p1_copy = room.player_1;
+			room.p2_copy = room.player_2;
 			setTimeout(() => {
 				server.to(room.name).emit("startGame");
 			}, 1000);
@@ -169,8 +175,8 @@ export class GameService {
 
 		const roomcpy = Object.assign({}, room);
 		const create = await this.historyService.create({
-			"player1": roomcpy.player_1,
-			"player2": roomcpy.player_2,
+			"player1": roomcpy.p1_copy,
+			"player2": roomcpy.p2_copy,
 			"player1_score": roomcpy.player1_score,
 			"player2_score": roomcpy.player2_score,
 			"gamemod": roomcpy.mod,
@@ -181,8 +187,8 @@ export class GameService {
 		room.state = "ending";
 		server.to(room.name).emit("endGame", { roomName: room.name, endStatus: room.end_status });
 
-		const p1 = await this.userService.findOne(Number(roomcpy.player_1));
-		const p2 = await this.userService.findOne(Number(roomcpy.player_2));
+		const p1 = await this.userService.findOne(Number(roomcpy.p1_copy));
+		const p2 = await this.userService.findOne(Number(roomcpy.p2_copy));
 		if (roomcpy.end_status == "1")
 		{
 			this.userService.winUp(p1);
@@ -224,6 +230,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				p1_copy: "",
+				p2_copy: "",
 				player1_score: undefined,
 				player2_score: undefined,
 				end_status: null,
@@ -239,6 +247,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				p1_copy: "",
+				p2_copy: "",
 				player1_score: undefined,
 				player2_score: undefined,
 				end_status: null,
@@ -254,6 +264,8 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				p1_copy: "",
+				p2_copy: "",
 				player1_score: undefined,
 				player2_score: undefined,
 				end_status: null,
@@ -290,7 +302,7 @@ export class GameService {
 	getPlayerSide(clientId: string, room: Room)
 	{
 		// var find = this.rooms.find((room) => room.name === roomName);
-		console.log("GPS", room)
+		// console.log("GPS", room)
 		if (!room)
 			return (0);
 		if (room.player_1 == clientId)
@@ -307,21 +319,21 @@ export class GameService {
 
 		if (find.player_1 == clientId || find.player_2 == clientId)
 		{
-			console.log(clientId, "already in the room", roomName);
+			// console.log(clientId, "already in the room", roomName);
 		}
 		else if (!find.player_1)
 		{
-			console.log(clientId, "in slot 1 of", roomName);
+			// console.log(clientId, "in slot 1 of", roomName);
 			find.player_1 = clientId;
 		}
 		else if (!find.player_2)
 		{
-			console.log(clientId, "in slot 2 of", roomName);
+			// console.log(clientId, "in slot 2 of", roomName);
 			find.player_2 = clientId;
 		}
 		else
 		{	
-			console.log("room is full !");
+			// console.log("room is full !");
 			return (null);
 		}
 		return (find);
@@ -361,6 +373,7 @@ export class GameService {
 			client.leave(room.name);
 			// console.log(username, "has left", room.name);
 		}
+		// LA C'EST CA QUI FAIT TOUT QUITTER JE PENSE
 		client.rooms.forEach((room) => client.leave(room));
 		server.to(username).emit("clear");
 	}
@@ -408,10 +421,6 @@ export class GameService {
 					room.end_status = "1";
 				if (room.end_status && room.name !== "ia room" && room.name !== "ia room2")
 				{
-					// if (room.end_status === "Player 1 Win")
-					// 	room.end_status = room.player_1 + " won";
-					// else if (room.end_status === "Player 2 Win")
-					// 	room.end_status = room.player_2 + " won";
 					this.endMatch(server, room);
 				}
 			}, 10);

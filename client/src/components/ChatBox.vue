@@ -172,6 +172,7 @@ export default defineComponent ({
 											room_type: this.channel_types[this.selected_channel_type]});
             // this.clearTextArea();
 			this.roomName = "";
+			this.passWord = "";
             window.scrollTo(0, document.body.scrollHeight);
         },
 
