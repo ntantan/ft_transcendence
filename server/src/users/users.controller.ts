@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query, Request, UseGuards, UseInterceptors, UploadedFile, StreamableFile, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, UseGuards, UseInterceptors, UploadedFile, StreamableFile, HttpException, HttpStatus } from '@nestjs/common';
 import { Res } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -6,7 +6,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Express } from 'express';
+import { Express, Response } from 'express';
 import 'multer';
 import * as fs from 'fs';
 import { createReadStream } from 'fs';
@@ -38,21 +38,7 @@ export class UsersController {
     // patch : modifies partially
     @Patch(':id')
     async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto, @Res() res: Response) {
-        try {
-            const user = await this.usersService.update(id, updateUserDto);
-            return user;
-        } catch(error) {
-            if (error.code === '23505') {
-                // Unique constraint violation (duplicate username value)
-                throw new HttpException(
-                  'Username already exists',
-                  HttpStatus.CONFLICT,
-            );} else {
-                throw new HttpException(
-                  'Something went wrong',
-                  HttpStatus.INTERNAL_SERVER_ERROR,
-            );}
-        }
+        return await this.usersService.update(id, updateUserDto);
     }
 
     @Post('/avatar/:id')
@@ -66,7 +52,7 @@ export class UsersController {
     async addFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
         return await this.usersService.addFriend(id, friendId);
     }
-    
+
     @Post(':id/block/:blockedId')
     async blockUser(@Param('id') id: number, @Param('blockedId') blockedId: number): Promise<User> {
         return await this.usersService.blockUser(id, blockedId);

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException, StreamableFile, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { Friend } from './entities/friend.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -78,10 +78,16 @@ export class UsersService {
             throw new NotFoundException(`User #${id} not found`);
         }
         try {
-            return this.userRepository.save(user);
+            await this.userRepository.save(user);
         } catch (error) {
-            throw error;
+            if (error.code === '23505') {
+                throw new BadRequestException("Username already exists");
+            }
+            else {
+                throw new InternalServerErrorException();
+            }
         }
+        return user;
     }
 
     async updateAvatar(fileName: string, id: number) {
@@ -197,7 +203,7 @@ export class UsersService {
         }
     }
 
-	async loseUp(user: User) {
+    async loseUp(user: User) {
         const queryRunner = this.connection.createQueryRunner();
 
         await queryRunner.connect();

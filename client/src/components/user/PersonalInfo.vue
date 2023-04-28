@@ -1,26 +1,18 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { userStore } from "@/stores/user";
+import axios from "axios";
 
 export default defineComponent({
-	name: "PersonalInfo",
-		
-	data() {
-		return {
+    name: "PersonalInfo",
+
+    data() {
+        return {
             userStore,
             URL: "http://localhost:3000/users/avatar/",
             nameEdit: false,
             tmpName: "",
-		};
-	},
-    
-    computed: {
-        user() {
-            return userStore.user;
-        },
-        userAvatar() {
-            return userStore.user.avatar;
-        }
+        };
     },
 
     methods: {
@@ -44,39 +36,33 @@ export default defineComponent({
             if (data.avatar)
                 this.userStore.updateAvatar(data.avatar);
         },
-        
+
         getAvatar() {
-            if (this.userAvatar.startsWith("https://cdn.intra.42.fr/")) {
-                return this.userAvatar;
+            if (this.userStore.user.avatar.startsWith("https://cdn.intra.42.fr/")) {
+                return this.userStore.user.avatar;
             }
-            return this.URL + this.userAvatar;
+            return this.URL + this.userStore.user.avatar;
         },
 
         async changeUsername() {
             this.nameEdit = false;
-            //user.username send to server
-            await fetch("http://localhost:3000/users/" + this.user.id, {
-                method: "PATCH",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    username: this.tmpName,
-                }),
+            await axios.patch("http://localhost:3000/users/" + this.userStore.user.id, {
+                username: this.tmpName
+            }, {
+                withCredentials: true
+            }).then(response => {
+                //this.userStore.user.username = this.tmpName;
+                this.userStore.user.username = this.tmpName;
+                this.tmpName = "";
             }).catch((error) => {
-                console.log(error);
-                if (error.response)
-                {
-                    console.log(error.response.data);
-                    this.tmpName = "";
+                if (error.response.status === 400) {
+                    alert("Username already exists");
                 }
-                return ;
+                this.tmpName = "";
             });
-            this.userStore.updateUserName(this.user.username);
         },
     },
-	
+
 }); 
 </script>
 
@@ -90,41 +76,34 @@ export default defineComponent({
             <v-btn color="primary" @click="updateAvatar">Update avatar</v-btn>
             <input type="file" id="avatar" />
         </v-card-title>
-        <v-card v-if="!nameEdit"
-            title="Username"
-            :subtitle="user.username"
-        ><template v-slot:append>
-            <v-btn
-            variant="text"
-            icon="mdi-chevron-left"
-            @click.stop="nameEdit = !nameEdit"
-            >Edit</v-btn>
-          </template></v-card>
+        <v-card v-if="!nameEdit" title="Username">
+            <template v-slot:subtitle>
+                {{ userStore.user.username }}
+            </template>
+            <template v-slot:append>
+                <v-btn variant="text" icon="mdi-chevron-left" @click.stop="nameEdit = !nameEdit">Edit</v-btn>
+            </template>
+        </v-card>
         <v-card v-if="nameEdit">
             <v-card-title>
                 Please type your new username
             </v-card-title>
             <v-card-text>
                 <v-form>
-                    <v-text-field label="New username" v-model="tmpName" required @keydown.enter.prevent="changeUsername"></v-text-field>
+                    <v-text-field label="New username" v-model="tmpName" required
+                        @keydown.enter.prevent="changeUsername"></v-text-field>
                     <v-btn color="primary" @click.stop="changeUsername">Save</v-btn>
                 </v-form>
             </v-card-text>
         </v-card>
-        <v-card
-            title="Level"
-            :subtitle="user.level.toString()"
-        ></v-card>
-        <v-card
-            title="Status"
-            :subtitle="user.status"
-        ></v-card>
+        <v-card title="Level" :subtitle="userStore.user.level.toString()"></v-card>
+        <v-card title="Status" :subtitle="userStore.user.status"></v-card>
 
     </v-card>
 </template>
 <style>
-    .avatar {
-        max-width: 150px;
-        max-height: 150px;
-    }
+.avatar {
+    max-width: 150px;
+    max-height: 150px;
+}
 </style>
