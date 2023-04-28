@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { gameStore } from "../stores/game";
+import { useGameStore } from "../stores/game";
 import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
@@ -15,7 +15,7 @@ export default defineComponent({
 			gamemod1: gamemod1,
 			gamemod2: gamemod2,
 			rooms: [],
-			gameStore,
+			gameStore: useGameStore(),
 			model: 1,
 		};
 	},
@@ -23,7 +23,17 @@ export default defineComponent({
 	components: {
 		HistoryDialog,
 	},
-
+	
+	created() {
+		this.gameStore = useGameStore();
+		this.gameStore.inGame = 0;
+		console.log()
+		if (localStorage.getItem("inGame"))
+			this.gameStore.inGame = Number(localStorage.getItem("inGame"))
+		if (localStorage.getItem("currentRoom"))
+			this.gameStore.currentRoom = localStorage.getItem("currentRoom")
+	},
+	
 	mounted() {
 		this.getRooms();
 
@@ -31,15 +41,14 @@ export default defineComponent({
 			const roomName = data.roomName;
 			this.gameStore.socket.emit("leaveRoom", { roomName });
 			this.gameStore.inGame = 0;
+			localStorage.setItem("inGame", this.gameStore.inGame);
 			this.getRooms();
 		});
+		
 	},
 
 	methods: {
 		async getRooms() {
-			// const localhost = import.meta.env.VITE_LOCALHOST;
-			// const response = await fetch(`http://${localhost}:3000/rooms`);
-			// this.rooms = await response.json();
 			axios.get("http://localhost:3000/rooms", {withCredentials: true})
 				.then((response) => {
 					this.rooms = response.data;
@@ -49,42 +58,36 @@ export default defineComponent({
 				})
 		},
 
-		test() 
-		{
-			this.gameStore.socket.emit("test");
-		},
-
 		joinQueue()
 		{
 			this.gameStore.socket.emit("joinQueue", { mod: this.model },(response) => {
 				this.gameStore.inGame = response.player_side;
+				console.log(this.gameStore.inGame)
+				localStorage.setItem("inGame", this.gameStore.inGame);
 				if (this.gameStore.inGame)
+				{
 					this.gameStore.currentRoom = response.roomName;
+					localStorage.setItem("currentRoom", this.gameStore.currentRoom);
+				}
 			});
 		},
-
-		// joinRoom(roomName: string)
-		// {
-		// 	// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
-		// 	this.gameStore.socket.emit("joinRoom", { roomName }, (response) => {
-		// 		this.gameStore.inGame = response.player_side;
-		// 		if (this.gameStore.inGame)
-		// 			this.gameStore.currentRoom = response.roomName;
-		// 	});
-		// },
 
 		leaveRoom(roomName: string)
 		{
 			this.gameStore.socket.emit("leaveRoom", { roomName });
 			this.gameStore.currentRoom = null;
+			localStorage.setItem("currentRoom", this.gameStore.currentRoom);
 			this.gameStore.inGame = 0;
+			localStorage.setItem("inGame", this.gameStore.inGame);
 		},
 
 		spectateRoom(roomName: string)
 		{
 			this.gameStore.socket.emit("spectateRoom", { roomName });
 			this.gameStore.currentRoom = roomName;
+			localStorage.setItem("currentRoom", this.gameStore.currentRoom);
 			this.gameStore.inGame = 3;
+			localStorage.setItem("inGame", this.gameStore.inGame);
 		},
 	} 
 });

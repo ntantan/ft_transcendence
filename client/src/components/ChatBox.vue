@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
-import { gameStore } from "@/stores/game";
+import { useGameStore } from "@/stores/game";
 import { userStore } from "@/stores/user";
 import { mergeProps } from "vue";
 import router from "@/router";
@@ -15,7 +15,7 @@ export default defineComponent ({
     data() {
         return {
             chatStore,
-			gameStore,
+			gameStore: useGameStore(),
 			userStore,
             socket: {},
 			isJoined: false,
@@ -365,7 +365,7 @@ export default defineComponent ({
 
 					<div v-if="channel_types[selected_channel_type] == 'public'">
 						<v-form @submit.prevent>
-							<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+							<v-text-field clearable v-model="this.roomName" label="Room name"></v-text-field>
 							<v-text-field v-model="this.passWord" label="Password"></v-text-field>
 							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
 						</v-form>
@@ -373,7 +373,7 @@ export default defineComponent ({
 
 					<div v-if="channel_types[selected_channel_type] == 'private'">
 						<v-form @submit.prevent>
-							<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+							<v-text-field clearable v-model="this.roomName" label="Room name"></v-text-field>
 							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
 						</v-form>
 					</div>

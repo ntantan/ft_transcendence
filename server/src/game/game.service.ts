@@ -39,12 +39,31 @@ export class GameService {
 
 		if (!find)
 		{
-			console.log(client.id, id, "connected to game socket");
+			// console.log(client.id, id, "connected to game socket");
+			this.try_reconnect(id, client);
 			return (this.player.push({id, socket_id}));
 		}
 		// console.log(id, "already connected to game socket");
 		client.disconnect();
 		return (null);
+	}
+
+	try_reconnect(id: string, client: Socket)
+	{
+		const find = this.rooms.find((room) => {
+			if (room.p1_copy == id && room.player_1 == undefined)
+			{
+				room.player_1 = id;
+				client.join(room.name);
+				return (room);
+			}
+			else if (room.p2_copy == id && room.player_2 == undefined)
+			{
+				room.player_2 = id;
+				client.join(room.name);
+				return (room);
+			}
+		})
 	}
 
 	player_leave(id: string, socket_id: string)
@@ -112,7 +131,8 @@ export class GameService {
 		{
 			for (var room of this.rooms)
 			{
-				if (room.name == "test room" 
+				if (room.name == "test room"
+				|| room.state != "waiting"
 				|| room.name == "ia room" 
 				|| room.mod != mod.toString()
 				|| room.name.includes("custom")) // Skip the test room, will be deleted later
@@ -374,7 +394,10 @@ export class GameService {
 			// console.log(username, "has left", room.name);
 		}
 		// LA C'EST CA QUI FAIT TOUT QUITTER JE PENSE
-		client.rooms.forEach((room) => client.leave(room));
+		// client.rooms.forEach((room) => {
+		// 	console.log(room);
+		// 	client.leave(room);
+		// });
 		server.to(username).emit("clear");
 	}
 
@@ -408,24 +431,34 @@ export class GameService {
 
 	createInterval(server: Server, room: Room, id: string) 
 	{
-		// setTimeout(() => {
-			const IntervalId = setInterval(() => {
-				if (room.name === "ia room" || room.name === "ia room2")
-					room.game.ia_move();
-	
+		var last_emit = new Date();
+		var current = new Date();
+		const IntervalId = setInterval(() => {
+			if (room.name === "ia room" || room.name === "ia room2")
+				room.game.ia_move();
+
+			if (room.player_1 && room.player_2)
+			{
 				room.end_status = room.game.ball_move(room);
 				server.to(room.name).emit("position", room.game);
-				if (!room.player_1)
-					room.end_status = "2";
-				else if (!room.player_2)
-					room.end_status = "1";
-				if (room.end_status && room.name !== "ia room" && room.name !== "ia room2")
+				last_emit = new Date();
+			}
+			else
+			{
+				current = new Date();
+				var dif = Math.abs((last_emit.getTime() - current.getTime()) / 1000);
+				if (dif >= 3)
 				{
-					this.endMatch(server, room);
+					if (!room.player_1)
+						room.end_status = "2";
+					else if (!room.player_2)
+						room.end_status = "1";
 				}
-			}, 10);
-			this.schedulerRegistry.addInterval(id, IntervalId);
-		// }, 5000);
+			}
+			if (room.end_status && room.name !== "ia room" && room.name !== "ia room2")
+				this.endMatch(server, room);
+		}, 10);
+		this.schedulerRegistry.addInterval(id, IntervalId);
 	}
 
 	deleteInterval(id:string)

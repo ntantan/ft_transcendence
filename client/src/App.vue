@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 import BannerBar from "./components/BannerBar.vue";
 import NavBar from "./components/NavBar.vue";
 
-import { gameStore, useGameStore } from "./stores/game";
+import { useGameStore } from "./stores/game";
 import { chatStore } from "./stores/chat";
 import router from "./router";
 
@@ -28,9 +28,9 @@ export default defineComponent({
 
 	data() {
 		return {
-			gameStore,
+			gameStore: useGameStore(),
 			chatStore,
-			piniaGameStore: useGameStore(),
+			// piniaGameStore: gameStore(),
 
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
@@ -45,15 +45,14 @@ export default defineComponent({
 	},
 
 	created() {
+		
 		const localhost = import.meta.env.VITE_LOCALHOST; // ${localhost}
-			
-		// console.log(this.piniaGameStore.socket)
+		
 		this.gameStore.socket = io(`http://localhost:3000/game`, { withCredentials: true });
-		// this.piniaGameStore.setSocket(this.gameStore.socket);
-
+		
 		this.chatStore.socket = io(`http://localhost:3000/chat`, { withCredentials: true });
 	},
-
+	
 	mounted() {
 
 		// Print an error notification
