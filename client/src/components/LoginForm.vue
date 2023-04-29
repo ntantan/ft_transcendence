@@ -52,7 +52,8 @@ export default defineComponent ({
 
 
 <template>
-	<v-row justify="center">
+<v-container class="d-flex h-75">
+	<v-row justify="center" align="center">
 		<v-col class="pa-8" cols="auto">
 			<v-card class="pa-8" width="500" elevation="3">
 				<div v-if="!this.userStore.authenticated" class="justify-center align-center justify-item">
@@ -86,6 +87,7 @@ export default defineComponent ({
 			</v-card>
 		</v-col>
 	</v-row>
+</v-container>
 </template>
 
 <style>

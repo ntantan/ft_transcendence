@@ -92,7 +92,7 @@ router.beforeEach(async (to, from) => {
 		 })
 		 .catch((error) => {
 			userStore.authenticated = false;
-			window.alert("You need to be logged to do that");
+			// window.alert("You need to be logged to do that");
 			console.error(error.response);
 		 })
 	if (!userStore.authenticated && to.name!== 'login')

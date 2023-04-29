@@ -17,10 +17,9 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-banner elevation="2">
-    <v-container>
+    <v-container class="container">
       <v-row wrap>
-        <v-col cols="2" class="d-flex justify-center">
+        <v-col cols="3" class="d-flex justify-center">
           <v-avatar v-bind:size="avatar.size">
             <v-img
               alt="sojung_avatar"
@@ -51,9 +50,7 @@ export default defineComponent({
           </v-avatar>
         </v-col>
 
-        <v-spacer></v-spacer>
-
-        <v-col cols="4" class="d-flex justify-center">
+        <v-col cols="6" class="d-flex justify-center">
 			<div class="transponder">
 				ft_transcendence created by
 				<div class="word">
@@ -66,25 +63,21 @@ export default defineComponent({
 			</div>
         </v-col>
 
-        <v-spacer></v-spacer>
-
-        <!-- <v-col cols="1" class="d-flex justify-center">
-          <v-btn class="button">Sign in</v-btn>
-        </v-col> -->
-        <v-col cols="auto" class="d-flex justify-center">
+        <v-col cols="3" class="d-flex justify-center">
           <v-btn v-if="!this.userStore.authenticated" color="primary" class="button" to="/login">Login</v-btn>
 		  <v-btn v-if="this.userStore.authenticated" color="primary" class="button" to="/login">Logged as {{ userStore.user.username }}</v-btn>
         </v-col>
       </v-row>
     </v-container>
-  </v-banner>
 </template>
 
 <style>
+
 .transponder {
 	position: absolute;
 	font-size: 1.6em;
 	font-family: sans-serif;
+	padding-right: 2em;
 }
 
 .word {

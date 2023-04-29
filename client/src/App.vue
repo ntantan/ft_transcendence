@@ -102,6 +102,7 @@ export default defineComponent({
 	<v-app id="app">
 		<v-main>
 			<banner-bar />
+			<v-divider class="border-opacity-30"></v-divider>
 			<router-view />
 			<nav-bar />
 
@@ -149,5 +150,4 @@ export default defineComponent({
 </template>
 
 <style>
-
 </style>
