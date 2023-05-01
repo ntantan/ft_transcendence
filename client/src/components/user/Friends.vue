@@ -10,11 +10,19 @@ export default defineComponent({
             userStore,
             URL: "http://localhost:3000/users/avatar/",
             friends: [],
+            search: "",
+            users: [],
+            foundUsers: [],
+            rules: [
+                (v: string) => /^[a-zA-Z0-9_]*$/.test(v) || "Only letters, numbers and underscores allowed",
+                //https://regexr.com/
+            ],
         };
     },
 
     async mounted() {
         this.friends = await this.getFriends();
+        this.users = await this.getUsers();
     },
 
     watch: {
@@ -26,8 +34,21 @@ export default defineComponent({
     },
 
     methods: {
+        async addFriend(userId: number) {
+            const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/addFriend/" + userId, {
+                method: "POST",
+                credentials: "include",
+            });
+            const data = await res.json();
+            if (data.error) {
+                console.log(data.error);
+                return;
+            }
+            userStore.updateUser(data);
+            this.friends = await this.getFriends();
+            this.foundUsers = [];
+        },
         async deleteFriend(userId: number) {
-            console.log("remove friend", userId);
             const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/deleteFriend/" + userId, {
                 method: "POST",
                 credentials: "include",
@@ -39,12 +60,6 @@ export default defineComponent({
             }
             userStore.updateUser(data);
             this.friends = await this.getFriends();
-        },
-        async sendDm(userId: number) {
-            console.log("send dm", userId);
-        },
-        async seeStats(userId: number) {
-            console.log("see stats", userId);
         },
         getAvatar(avatar: string): string {
             if (avatar.startsWith("https://cdn.intra.42.fr/")) {
@@ -88,7 +103,52 @@ export default defineComponent({
             }
             return friendsList;
         },
-
+        async getUsers(): Promise<any[]> {
+            const users = await fetch("http://localhost:3000/users", {
+                method: "GET",
+                credentials: "include",
+            });
+            const data = await users.json();
+            return data;
+        },
+        searchUser(): void {
+            this.foundUsers = [];
+            if (this.search === "") {
+                return;
+            }
+            for (let i = 0; i < this.users.length; i++) {
+                if (this.users[i].username.includes(this.search)) {
+                    this.foundUsers.push(this.users[i]);
+                }
+            }
+            this.search = "";
+        },
+        isBlocked(userId: number): boolean {
+            const blocked = userStore.user.blocked;
+            if (blocked === undefined) {
+                return false;
+            }
+            for (let i = 0; i < blocked.length; i++) {
+                if (blocked[i].userId === userId) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        async unblockUser(userId: number) {
+            const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/unblock/" + userId, {
+                method: "POST",
+                credentials: "include",
+            });
+            const data = await res.json();
+            if (data.error) {
+                console.log(data.error);
+                return;
+            }
+            userStore.updateUser(data);
+            this.friends = await this.getFriends();
+            this.foundUsers = [];
+        },
     },
 });
 </script>
@@ -98,9 +158,43 @@ export default defineComponent({
         <v-card-title>
             <h2>Friends</h2>
         </v-card-title>
+        <v-container>
+            <v-col cols="6">
+                <v-form>
+                    <v-text-field label="Search user with username" v-model="search" append-inner-icon="mdi-magnify"
+                        single-line variant="underlined" @click:append-inner="searchUser"
+                        @keydown.enter.prevent="searchUser" :rules="rules"></v-text-field>
+                </v-form>
+                <v-card v-if="foundUsers">
+                    <v-row dense>
+                        <v-col cols="12" v-for="user in foundUsers">
+                            <v-card color="#B0E0E6">
+                                <v-card-title class="text">
+                                    {{ user.username }}
+                                </v-card-title>
+                                <v-avatar size="50">
+                                    <v-img :src="getAvatar(user.avatar)"></v-img>
+                                </v-avatar>
+                                <v-card-actions>
+                                    <v-btn v-if="isBlocked(user.id)" size="small" variant="text" title="Unblock user"
+                                        icon="mdi-lock-open-check-outline" @click="unblockUser(user.id)"></v-btn>
+                                    <v-btn v-else size="small" variant="text" title="Add to friend" icon="mdi-account-plus"
+                                        @click="addFriend(user.id)"></v-btn>
+                                    <v-btn :href="`/user/${user.id}`" size="small" variant="text" title="See stats"
+                                        icon="mdi-scoreboard"></v-btn>
+                                    <v-btn size="small" variant="text" title="Block user" icon="mdi-cancel"
+                                        @click="block(user.id)"></v-btn>
+                                </v-card-actions>
+
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </v-card>
+            </v-col>
+        </v-container>
         <v-container fluid v-show="friends">
             <v-row dense>
-                <v-col cols="12" v-for="friend in friends">
+                <v-col cols="6" v-for="friend in friends">
                     <v-card color="#5F9EA0" theme="dark">
                         <div class="d-flex flex-no-wrap justify-space-between">
                             <div>
@@ -115,11 +209,11 @@ export default defineComponent({
                                 </v-card-subtitle>
                                 <v-spacer></v-spacer>
                                 <v-card-actions>
-                                    <v-btn size="small" variant="text" title="Remove from friend" icon="mdi-delete"
+                                    <v-btn size="small" variant="text" title="Remove from friend" icon="mdi-account-minus"
                                         @click="deleteFriend(friend.id)"></v-btn>
                                     <v-btn :href="`/user/${friend.id}`" size="small" variant="text" title="See stats"
-                                        icon="mdi-scoreboard" @click="seeStats(friend.id)"></v-btn>
-                                    <v-btn size="small" variant="text" title="Block user" icon="mdi-block-helper"
+                                        icon="mdi-scoreboard"></v-btn>
+                                    <v-btn size="small" variant="text" title="Block user" icon="mdi-cancel"
                                         @click="block(friend.id)"></v-btn>
                                 </v-card-actions>
                             </div>
@@ -130,5 +224,6 @@ export default defineComponent({
                     </v-card>
                 </v-col>
             </v-row>
-        </v-container></v-card>
+        </v-container>
+    </v-card>
 </template>

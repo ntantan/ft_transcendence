@@ -136,6 +136,20 @@ export class UsersService {
         user.blocked.push(blocked);
         return await this.userRepository.save(user);
     }
+    
+    async unblockUser(id: number, friendId: number): Promise<User> {
+        const user = await this.findOne(id);
+        const blockedToDelete = await this.findOne(friendId);
+
+        if (!user || !blockedToDelete) {
+            throw new NotFoundException(`User(s) not found`);
+        }
+        const blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
+        if (blocked) {
+            user.blocked = user.blocked.filter(blocked => blocked.userId !== friendId);
+        }
+        return await this.userRepository.save(user);
+    }
 
     async deleteFriend(id: number, friendId: number): Promise<User> {
         const user = await this.findOne(id);

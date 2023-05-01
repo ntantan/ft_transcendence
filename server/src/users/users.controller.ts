@@ -58,7 +58,10 @@ export class UsersController {
         return await this.usersService.blockUser(id, blockedId);
     }
 
-    //@Post(':id/unblock/:blockedId')
+    @Post(':id/unblock/:blockedId')
+    async unblockUser(@Param('id') id: number, @Param('blockedId') blockedId: number): Promise<User> {
+        return await this.usersService.unblockUser(id, blockedId);
+    }
 
     @Post(':id/deleteFriend/:friendId')
     async deleteFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
