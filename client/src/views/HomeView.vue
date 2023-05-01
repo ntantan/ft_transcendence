@@ -11,6 +11,12 @@ export default defineComponent({
 		return {
 			sides: ['icons', 'technos'],
 			current_side: 'icons',
+
+			logos: ['https://cdn.vuetifyjs.com/docs/images/logos/vuetify-logo-v3-dark.svg',
+					'https://github.com/typeorm/typeorm/raw/master/resources/logo_big.png',
+					'https://vitejs.dev/logo-with-shadow.png',
+					'https://docs.docker.com/assets/images/engine.svg',
+					'https://socket.io/images/logo.svg'],
 		}
 	},
 
@@ -266,43 +272,14 @@ export default defineComponent({
 		</div>
 
 		<div class="d-flex justify-center align-center">
-			<div class="logo-container" 
+			<div class="logo-container"
+			v-for="(logo, index) in this.logos"
 			v-motion-fade
-			:delay="1500">
-			test
-			</div>
-				
-			<div class="logo-container" 
-			v-motion-fade
-			:delay="1800">
-			test
-			</div>
-
-			<div class="logo-container" 
-				v-motion
-				:delay="2100"
-				:initial="{
-					y: 100,
-					opacity: 0,
-				}"
-				:enter="{
-					y: 0,
-					opacity: 1,
-					transition: {
-						repeat: Infinity,
-						repeatType: 'reverse',
-						repeatDelay: 2000
-					}
-				}"
-				:leave="{
-					y:-100,
-				}"
-			>
-			test
+			:delay="1000 + index * 200">
+				<v-img :src="logo" height="50" :alt="logo"></v-img>
 			</div>
 		</div>
 	</div>
-
 
 </template>
 
@@ -352,15 +329,15 @@ export default defineComponent({
 }
 
 .logo-container {
-	width: 4em;
+	width: 6em;
 	height: 4em;
 	margin: 3em 1em auto 1em;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	background: #ffffff;
+	/* border: solid; */
 	border-radius: 10px;
-	border: solid;
 	border-color: rgb(142, 142, 142);
 	font-weight: bold;
 }

@@ -78,10 +78,10 @@ export default defineComponent({
 		<h1 class="d-flex justify-center align-center">Match history</h1>
 		<v-card>
 			<v-row>
-				<v-col cols="3" class="column">Opponent</v-col>
-				<v-col cols="3" class="column">Score</v-col>
-				<v-col cols="3" class="column" >Result</v-col>
-				<v-col cols="3" class="column">Date</v-col>
+				<v-col cols="3" class="column my-2">Opponent</v-col>
+				<v-col cols="3" class="column my-2">Score</v-col>
+				<v-col cols="3" class="column my-2" >Result</v-col>
+				<v-col cols="3" class="column my-2">Date</v-col>
 			</v-row>
 		</v-card>
 

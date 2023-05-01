@@ -45,7 +45,7 @@ export default defineComponent({
 
 <template>
 	<v-container class="d-flex justify-center align-center">
-    <v-card class="w-75">
+    <v-card class="w-75 pa-3">
 
 		<h1 class="d-flex justify-center align-center">{{ this.userStore.user.username + "'s stats" }}</h1>
 
