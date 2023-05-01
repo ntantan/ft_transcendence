@@ -15,7 +15,7 @@
 			<v-card-subtitle>
 				<v-card-title>Friends</v-card-title>
 				<v-list dense>
-					<v-list-item v-for="friend in user.friends" :key="friend.id" :title="friend.username"></v-list-item>
+					<v-list-item v-for="friend in friendsAsUser" :key="friend.id" :title="friend.username"></v-list-item>
 				</v-list>
 			</v-card-subtitle>
 
@@ -58,6 +58,7 @@ export default {
 			},
 			matches: [],
 			URL: "http://localhost:3000/users/avatar/",
+			friendsAsUser: [],
 		};
 	},
 	async created() {
@@ -82,6 +83,7 @@ export default {
 		} else {
 			console.error('allMatches is not an array', allMatches);
 		}
+		this.friendsAsUser = await this.getFriends();
 	},
 	methods: {
 		goBack() {
@@ -92,6 +94,27 @@ export default {
 				return user.avatar;
 			}
 			return this.URL + user.avatar;
+		},
+		async getFriends(): Promise<any[]> {
+			const friends = this.user.friends;
+			if (friends === undefined) {
+				return [];
+			}
+			let friendsList = [];
+			for (let i = 0; i < friends.length; i++) {
+				const friend = await fetch(
+					"http://localhost:3000/users/" + friends[i].userId,
+					{
+						method: "GET",
+						credentials: "include",
+					}
+				);
+				if (friend !== undefined) {
+					const data = await friend.json();
+					friendsList.push(data);
+				}
+			}
+			return friendsList;
 		},
 	},
 };
