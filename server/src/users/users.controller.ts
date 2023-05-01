@@ -37,7 +37,7 @@ export class UsersController {
     // put : replaces all the resource
     // patch : modifies partially
     @Patch(':id')
-    async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto, @Res() res: Response) {
+    async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto, @Res() res: Response): Promise<User> {
         return await this.usersService.update(id, updateUserDto);
     }
 

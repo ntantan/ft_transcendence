@@ -2,7 +2,6 @@ import { reactive } from "vue";
 
 export const userStore = reactive({
 	authenticated: false,
-	twoFactorAutenticated: false,
 	user: {},
 	updateUser(data) {
 		userStore.user = data;

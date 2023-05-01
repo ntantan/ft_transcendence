@@ -7,6 +7,10 @@ import { Blocked } from '../entities/blocked.entity';
 export class CreateUserDto {
     @IsNotEmpty()
     @IsString()
+    readonly login: string;
+
+    @IsNotEmpty()
+    @IsString()
     readonly username: string;
 
     @IsNotEmpty()
@@ -35,6 +39,9 @@ export class CreateUserDto {
     // @IsNotEmpty()
     @IsString()
     readonly secret: string;
+
+    @IsNotEmpty()
+    readonly two_fa_logged: boolean;
 
     @IsNotEmpty()
     readonly friends: Friend[];
