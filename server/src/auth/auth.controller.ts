@@ -10,10 +10,10 @@ import { HttpAdapterHost } from '@nestjs/core';
 
 @Controller('auth')
 export class AuthController {
-    constructor(
+	constructor(
 		private readonly authService: AuthService,
 		private readonly usersService: UsersService
-		) {}
+	) { }
 
 	@Get()
 	async redirectToLogin(@Res() res) {
@@ -51,24 +51,22 @@ export class AuthController {
 	}
 
 	@Get('route_guard')
-	async is_logged(@Req() req: Request, @Res() res: Response)
-	{
+	async is_logged(@Req() req: Request, @Res() res: Response) {
 		if (!req.cookies['jwt'])
-			return(res.status(401).send("no jwt provided"));
-
+			return (res.status(401).send("no jwt provided"));
 		const verify = await this.authService.verifyJwt(req.cookies['jwt']);
 		if (!verify)
-			return(res.status(401).send("jwt verification failed"));
-		return(res.status(200).send(verify));
+			return (res.status(401).send("jwt verification failed"));
+		return (res.status(200).send(verify));
 	}
 
 	@Get(':id/2faSecret')
-    async get2faSecret(@Param('id') id: number): Promise<User> {
-        return await this.authService.get2faSecret(id);
-    }
+	async get2faSecret(@Param('id') id: number): Promise<User> {
+		return await this.authService.get2faSecret(id);
+	}
 
-    @Post(':id/verify2fa')
-    async verify2fa(@Param('id') id: number, @Body() code: string): Promise<any> {
-        return await this.authService.verify2fa(id, code);
-    }
+	@Post(':id/verify2fa')
+	async verify2fa(@Param('id') id: number, @Body() code: string): Promise<any> {
+		return await this.authService.verify2fa(id, code);
+	}
 }

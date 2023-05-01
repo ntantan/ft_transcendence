@@ -68,7 +68,7 @@ export class UsersService {
             (await Promise.all(
                 updateUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
             ));
-        const user = await this.userRepository.preload({
+        let user = await this.userRepository.preload({
             id: id,
             ...updateUserDto,
             friends,
@@ -78,12 +78,13 @@ export class UsersService {
             throw new NotFoundException(`User #${id} not found`);
         }
         try {
-            await this.userRepository.save(user);
+            user = await this.userRepository.save(user);
         } catch (error) {
             if (error.code === '23505') {
                 throw new BadRequestException("Username already exists");
             }
             else {
+                console.log(error + " in usersService update");
                 throw new InternalServerErrorException();
             }
         }
@@ -133,6 +134,20 @@ export class UsersService {
             this.blockedRepository.save(blocked);
         }
         user.blocked.push(blocked);
+        return await this.userRepository.save(user);
+    }
+    
+    async unblockUser(id: number, friendId: number): Promise<User> {
+        const user = await this.findOne(id);
+        const blockedToDelete = await this.findOne(friendId);
+
+        if (!user || !blockedToDelete) {
+            throw new NotFoundException(`User(s) not found`);
+        }
+        const blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
+        if (blocked) {
+            user.blocked = user.blocked.filter(blocked => blocked.userId !== friendId);
+        }
         return await this.userRepository.save(user);
     }
 
@@ -245,11 +260,12 @@ export class UsersService {
 
     async saveUserInfo(token: string, info: { login: string, imgUrl: string }): Promise<User> {
         const user = await this.userRepository.findOne({
-            where: [{ username: info.login }],
-            relations: ['friends'],
+            where: [{ login: info.login }],
+            relations: ['friends', 'blocked'],
         });
         if (!user) {
             const createUserDto: CreateUserDto = {
+                login: info.login,
                 username: info.login,
                 authToken: token,
                 avatar: info.imgUrl,
@@ -259,6 +275,7 @@ export class UsersService {
                 lose: 0,
                 two_fa: false,
                 secret: "",
+                two_fa_logged: false,
                 friends: [],
                 blocked: [],
             };

@@ -11,6 +11,7 @@ export class ChatService {
 
 	private testuser: User = {
 		id: 99,
+		login: "test",
 		username: "test",
 		authToken: "",
 		avatar: "",
@@ -20,6 +21,7 @@ export class ChatService {
 		lose: 0,
 		two_fa: false,
 		secret: "",
+		two_fa_logged: false,
 		friends: null,
 		blocked: [],
 	};

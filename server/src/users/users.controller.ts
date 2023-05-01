@@ -37,7 +37,7 @@ export class UsersController {
     // put : replaces all the resource
     // patch : modifies partially
     @Patch(':id')
-    async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto, @Res() res: Response) {
+    async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto, @Res() res: Response): Promise<User> {
         return await this.usersService.update(id, updateUserDto);
     }
 
@@ -58,7 +58,10 @@ export class UsersController {
         return await this.usersService.blockUser(id, blockedId);
     }
 
-    //@Post(':id/unblock/:blockedId')
+    @Post(':id/unblock/:blockedId')
+    async unblockUser(@Param('id') id: number, @Param('blockedId') blockedId: number): Promise<User> {
+        return await this.usersService.unblockUser(id, blockedId);
+    }
 
     @Post(':id/deleteFriend/:friendId')
     async deleteFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
