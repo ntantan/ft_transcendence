@@ -117,8 +117,8 @@ export default defineComponent({
                                 <v-card-actions>
                                     <v-btn size="small" variant="text" title="Remove from friend" icon="mdi-delete"
                                         @click="deleteFriend(friend.id)"></v-btn>
-                                    <v-btn size="small" variant="text" title="See stats" icon="mdi-scoreboard"
-                                        @click="seeStats(friend.id)"></v-btn>
+                                    <v-btn :href="`/user/${friend.id}`" size="small" variant="text" title="See stats"
+                                        icon="mdi-scoreboard" @click="seeStats(friend.id)"></v-btn>
                                     <v-btn size="small" variant="text" title="Block user" icon="mdi-block-helper"
                                         @click="block(friend.id)"></v-btn>
                                 </v-card-actions>
