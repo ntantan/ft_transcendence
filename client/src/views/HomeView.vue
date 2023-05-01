@@ -254,15 +254,52 @@ export default defineComponent({
 		</div>
 
 		<div v-motion-pop>
-		<v-container class="d-flex justify-center align-center w-100 mt-5">
-			<v-btn
-			color="primary"
-			prepend-icon="mdi-vuetify"
-			stacked
-			tonal
-			@click="switchSide()"
-			>See our features</v-btn>
-		</v-container>
+			<v-container class="d-flex justify-center align-center w-100 mt-5">
+				<v-btn
+				color="primary"
+				prepend-icon="mdi-vuetify"
+				stacked
+				tonal
+				@click="switchSide()"
+				>See our features</v-btn>
+			</v-container>
+		</div>
+
+		<div class="d-flex justify-center align-center">
+			<div class="logo-container" 
+			v-motion-fade
+			:delay="1500">
+			test
+			</div>
+				
+			<div class="logo-container" 
+			v-motion-fade
+			:delay="1800">
+			test
+			</div>
+
+			<div class="logo-container" 
+				v-motion
+				:delay="2100"
+				:initial="{
+					y: 100,
+					opacity: 0,
+				}"
+				:enter="{
+					y: 0,
+					opacity: 1,
+					transition: {
+						repeat: Infinity,
+						repeatType: 'reverse',
+						repeatDelay: 2000
+					}
+				}"
+				:leave="{
+					y:-100,
+				}"
+			>
+			test
+			</div>
 		</div>
 	</div>
 
@@ -298,7 +335,6 @@ export default defineComponent({
 	justify-content: center;
 	align-items: center;
 	background: #ffffff;
-	border-radius: 10px;
 	border: solid;
 	border-color: rgb(142, 142, 142);
 	font-weight: bold;
@@ -314,4 +350,19 @@ export default defineComponent({
 	background: #ffffff;
 	font-weight: bold;
 }
+
+.logo-container {
+	width: 4em;
+	height: 4em;
+	margin: 3em 1em auto 1em;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: #ffffff;
+	border-radius: 10px;
+	border: solid;
+	border-color: rgb(142, 142, 142);
+	font-weight: bold;
+}
+
 </style>

@@ -15,6 +15,7 @@
     "@mdi/js": "^7.2.96",
     "@vueuse/motion": "^2.0.0-beta.12",
     "axios": "^1.3.4",
+    "gsap": "^3.11.5",
     "otplib": "^12.0.1",
     "pinia": "^2.0.28",
     "pinia-plugin-persistedstate": "^3.1.0",

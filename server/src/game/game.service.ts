@@ -226,7 +226,7 @@ export class GameService {
 	checkLevelUp(user: User)
 	{
 		let i = 0;
-		while (user.win * 2 + user.lose >= user.level * 3 && i < 5)
+		while (user.win * 2 + user.lose >= user.level * 3 && i < 20)
 		{
 			this.userService.levelUp(user)
 			i++;

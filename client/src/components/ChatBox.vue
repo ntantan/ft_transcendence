@@ -281,7 +281,7 @@ export default defineComponent ({
 		toProfile(channel_user: any)
 		{
 			const id = channel_user.user.id;
-			
+			router.push({ path: '/user/' + id});
 		},
 
 		blockUser(channel_user: any)
