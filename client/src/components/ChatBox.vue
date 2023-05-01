@@ -8,6 +8,7 @@ import { useGameStore } from "@/stores/game";
 import { userStore } from "@/stores/user";
 import { mergeProps } from "vue";
 import router from "@/router";
+import { mdiRhombusSplit } from "@mdi/js";
 
 const CHANNELS_URL = "http://localhost:3000/channels/";
 
@@ -167,6 +168,9 @@ export default defineComponent ({
         createNewRoom() {
 			if (!this.roomName)
 				return;
+
+			if (this.roomName.length > 30)
+				this.roomName = this.roomName.substring(0, 30) + "...";
             this.socket.emit('createRoom', {room_name: this.roomName,
 											password: this.passWord, 
 											room_type: this.channel_types[this.selected_channel_type]});
@@ -313,13 +317,11 @@ export default defineComponent ({
 </script>
 
 <template>
-	<v-responsive>
-    <v-card width="auto" class="h-chat ma-6" transition="fade-transition">
+	<div class="d-flex justify-center">
+    <v-card width="1200" class="h-chat ma-6">
         <v-row>
             <v-col cols="3">
-
                 <v-card class="h-chat">
-
 					<h2 class="d-flex justify-center align">Channels</h2>
 
 					<v-window
@@ -392,8 +394,7 @@ export default defineComponent ({
 
             <v-col align-self="end">
 
-				<v-card class="h-options mx-auto">
-
+				<v-card class="h-options">
 					<v-row v-if="!isJoined && selectedRoomname">
 						<v-col class="ma-2" align-self="center" cols="5">
 							<v-card-title>{{ selectedRoomname }}</v-card-title>
@@ -534,7 +535,7 @@ export default defineComponent ({
             </v-col>
         </v-row>
     </v-card>
-	</v-responsive>
+</div>
 	<!-- error bar -->
 	<div class="text-center">
 		<v-snackbar
