@@ -1,13 +1,15 @@
-import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, GoneException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Channel } from "./entities/channel.entity";
-import { ArrayContainedBy, ArrayContains, FindOperator, In, Repository } from "typeorm";
+import { ArrayContainedBy, ArrayContains, FindOperator, In, Not, Repository } from "typeorm";
 import { Messages } from "./entities/messages.entity";
 import { WsException } from "@nestjs/websockets";
 import { User } from "src/users/entities/user.entity";
 import { Response } from "express";
 import { ChannelUser } from "./entities/channelUser.entity";
 import { UsersService } from "src/users/users.service";
+import { ChatModule } from "../chat.module";
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ChannelService
@@ -32,10 +34,15 @@ export class ChannelService
 	async getChannel(id: string, user: User)
 	{
 		const channel = await this.channelRepository.findOne({
-			where: [{id: Number(id)}],
+			where: [{
+				id: Number(id),
+				messages: {
+					user: Not(In(user.blocked)),
+				}
+			}],
 			relations: {
 				channel_users: {
-					user: true,
+					user: true
 				},
 				messages: {
 					user: true
@@ -83,7 +90,7 @@ export class ChannelService
 	{
 		for (const channel of channels)
 		{
-			const other = channel.channel_users.find((channel_user) => channel_user.id !== user.id);
+			const other = channel.channel_users.find((channel_user) => channel_user.user.id !== user.id);
 			if (other)
 				channel.name = other.user.username;
 		}
@@ -91,12 +98,7 @@ export class ChannelService
 
 	async getDirectChannels(user: User)
 	{
-		const channels = await this.channelRepository.find({
-			relations: {
-				channel_users: {
-					user: true,
-				}
-			},
+		const select_channels = await this.channelRepository.find({
 			where: [{
 				type: "direct",
 				channel_users: {
@@ -104,75 +106,114 @@ export class ChannelService
 						id: user.id
 					}
 				},
-			},
-			]
+			}],
+			select: {
+				id: true,
+			}
 		});
-
-		this.adaptDirectChannelName(user, channels);
+		const arr = [];
+		select_channels.map((channel) => arr.push(channel.id));
+		const channels = await this.channelRepository.find({
+			relations: {
+				channel_users: {
+					user: true,
+				},
+			},
+			where: {
+				id: In(arr)
+			}
+		})
+		// console.log(channels)
 		return (channels)
 	}
 
 	// Create one room
 	async createChannel(name: string, password: string, owner: User, type: string)
 	{
-		const newChannel = this.channelRepository.create({
-			name: name,
-			password: password,
-			type: type,
-		});
-		await this.channelRepository.save(newChannel);
 
-		const channel_user = this.channelUserRepository.create({
-			user: owner,
-			channel_owner: true,
-			admin: false,
-			banned: false,
-			muted: null,
-			channel: newChannel
-		});
-		await this.channelUserRepository.save(channel_user);
-		newChannel.channel_users = [channel_user];
+		if (password)
+		{
+			var saltRounds = 10;
+			await bcrypt.hash(password, saltRounds).then(async (hash) => {
+				var createChannel = {
+					name: name,
+					password: hash,
+					type: type,
+				}
+				var newChannel = this.channelRepository.create(createChannel);
+				await this.channelRepository.save(newChannel);
 
-		const a = await this.channelRepository.save(newChannel);
-		const newMessage = this.messageRepository.create({
-			message: "Welcome to " + name + " channel! It was created by ",
-			user: owner,
-			date: new Date(),
-			channel: newChannel
-		});
-		await this.messageRepository.save(newMessage);
-		newChannel.messages = [newMessage];
-	
-		return (await this.channelRepository.save(newChannel));
+				const channel_user = this.channelUserRepository.create({
+					user: owner,
+					channel_owner: true,
+					admin: false,
+					banned: false,
+					muted: null,
+					channel: newChannel
+				});
+				await this.channelUserRepository.save(channel_user);
+				newChannel.channel_users = [channel_user];
+		
+				const a = await this.channelRepository.save(newChannel);
+				const newMessage = this.messageRepository.create({
+					message: "Welcome to " + name + " channel!",
+					user: owner,
+					date: new Date(),
+					channel: newChannel
+				});
+				await this.messageRepository.save(newMessage);
+				newChannel.messages = [newMessage];
+				return (await this.channelRepository.save(newChannel));
+			})
+		}
+		else
+		{
+			var createChannel = {
+				name: name,
+				password: password,
+				type: type,
+			}
+			var newChannel = this.channelRepository.create(createChannel);
+			await this.channelRepository.save(newChannel);
+
+			const channel_user = this.channelUserRepository.create({
+				user: owner,
+				channel_owner: true,
+				admin: false,
+				banned: false,
+				muted: null,
+				channel: newChannel
+			});
+			await this.channelUserRepository.save(channel_user);
+			newChannel.channel_users = [channel_user];
+
+			if (type != "direct")
+			{
+				const a = await this.channelRepository.save(newChannel);
+				const newMessage = this.messageRepository.create({
+					message: "Welcome to " + name + " channel!",
+					user: owner,
+					date: new Date(),
+					channel: newChannel
+				});
+				await this.messageRepository.save(newMessage);
+				newChannel.messages = [newMessage];
+			}
+			return (await this.channelRepository.save(newChannel));
+		}
 	}
 
 	async createDirectChannel(user: User, other_user_id: number)
 	{
-		const channels = await this.channelRepository.find({
-			relations: {
-				channel_users: {
-					user: true,
-				}
-			},
-			where: [{
-				type: "direct",
-				channel_users: {
-					user: {
-						id: user.id
-					}
-				},
-			},
-			]
-		});
-
+		const channels = await this.getDirectChannels(user);
 		for (const channel of channels)
 		{
 			if (channel.channel_users.find((channel_user) => channel_user.user.id == user.id) 
 				&& channel.channel_users.find((channel_user) => channel_user.user.id == other_user_id))
 			throw new ForbiddenException('Channel already exists')
 		}
-
-		return (this.createChannel(user.id + "+" + other_user_id, "", user, "direct"));
+		const newChannel = await this.createChannel(user.username, "", user, "direct");
+		this.addUser(String(newChannel.id), await this.usersService.findOne(other_user_id), "");
 	}
 
 	async findChannelById(id: string)
@@ -194,11 +235,6 @@ export class ChannelService
 	async findChannelUserByUser(channel: Channel, user_id: number)
 	{
 		const channel_user = channel.channel_users.find((channel_user) => channel_user.user.id === user_id);
-		// const channel_user = await this.channelUserRepository.findOne({
-		// 	relations: ['user'],
-		// 	loadRelationIds: true,
-		// 	where: [{user: user}],
-		// })
 		if (channel_user)
 			return (channel_user);
 		throw new NotFoundException("User " + user_id + " not found in this channel");
@@ -208,8 +244,8 @@ export class ChannelService
 	async newMessage(channel_id: string, user: User, message: string)
 	{
 		const channel = await this.findChannelById(channel_id);
-		if (await this.isMuted(channel, user))
-			throw new ForbiddenException('User is muted');
+		const channel_user = await this.findChannelUserByUser(channel, user.id);
+		await this.isMuted(channel_user)
 
 		const newMessage = this.messageRepository.create({
 			message: message,
@@ -221,19 +257,22 @@ export class ChannelService
 		return (await this.messageRepository.save(newMessage));
 	}
 
-	async isMuted(channel: Channel, user: User)
+	async isMuted(channel_user: ChannelUser)
 	{
-		const channel_user = await this.findChannelUserByUser(channel, user.id);
 		// if not muted
+		var current = new Date();
 		if (channel_user.muted == null)
 			return (false);
 		else
 		{
-			const current = new Date();
 			if (current > channel_user.muted)
+			{
+				channel_user.muted = null;
 				return (false)
+			}
 		}
-		return (true);
+		throw new ForbiddenException('User is muted for ' + Math.floor((channel_user.muted.getTime() - current.getTime()) / 60000) + ' minutes.');
+
 	}
 
 	// Add admin if true, remove admin if false
@@ -329,15 +368,18 @@ export class ChannelService
 		const channel = await this.findChannelById(channel_id);
 		// const user = await this.usersService.findOne(user_id);
 
-		const ch_pass = await this.channelRepository.findOne({
-			where: [{id: Number(channel_id)}],
-			select: {
-				password: true,
-			}
-		})
-
-		if (ch_pass.password && ch_pass.password !== password)
-			throw new UnauthorizedException("Wrong Password");
+		const ch_pass = await this.channelRepository
+				.createQueryBuilder('channel')
+				.where("channel.id = :id", {id: channel_id})
+				.addSelect("channel.password")
+				.getOne()
+		if (ch_pass.password)
+		{
+			await bcrypt.compare(password, ch_pass.password).then((result) => {
+				if (result == false)
+					throw new UnauthorizedException("Wrong Password");
+			})
+		}
 
 		let channel_user;
 		try {
@@ -361,12 +403,28 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
+	async addUserPrivate(channel_id: string, user_id: string)
+	{
+		const user = await this.usersService.findOne(Number(user_id));
+		return (await this.addUser(channel_id, user, ""));
+	}
+
 	async rmUser(channel_id: string, user: User)
 	{
 		const channel = await this.findChannelById(channel_id);
+		const messages = await this.messageRepository.find({where: [{channel: channel}]});
+		const channel_users = await this.channelUserRepository.find({where:[{channel: channel}]});
 		const channel_user = await this.findChannelUserByUser(channel, user.id);
 
-		this.channelUserRepository.remove(channel_user);
+		if (channel_user.channel_owner)
+		{
+			await this.messageRepository.remove(messages);
+			await this.channelUserRepository.remove(channel_users);
+			await this.channelRepository.remove(channel);
+			throw new GoneException('Channel owner has left the channel');
+		}
+		else
+			this.channelUserRepository.remove(channel_user);
 		return (await this.channelRepository.save(channel));
 	}
 

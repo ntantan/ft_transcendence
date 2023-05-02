@@ -9,6 +9,9 @@ export class User {
     id: number;
 
     @Column()
+    login: string;
+
+    @Column({ unique: true })
     username: string;
 
     @Column()
@@ -31,9 +34,12 @@ export class User {
 
     @Column({ default: false })
     two_fa: boolean;
-    
+
     @Column({ default: "" })
     secret: string;
+
+    @Column({ default: false })
+    two_fa_logged: boolean;
 
     @JoinTable()
     @ManyToMany(
@@ -42,7 +48,7 @@ export class User {
         {
             cascade: true, // ['insert']
         },
-        )
+    )
     friends: Friend[];
 
     @JoinTable()

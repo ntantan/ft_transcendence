@@ -19,13 +19,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     handleConnection(@ConnectedSocket() client: Socket) 
 	{
-		console.log(client.id , "in the chat socket");	
+		// console.log(client.id , "in the chat socket");	
 	}
 
 	handleDisconnect(@ConnectedSocket() client: Socket)
 	{
 		client.disconnect();
-		console.log(client.id, " disconnect from chat socket")
+		// console.log(client.id, " disconnect from chat socket")
 	}
 	
     @SubscribeMessage('createRoom')
@@ -38,10 +38,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		try { await this.channelService.createChannel(body.room_name, body.password, user, body.room_type); }
 		catch (error) {
 			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 		this.server.emit('newRoom');
-		console.log("room " + body.room_name + " created");
+		// console.log("room " + body.room_name + " created");
     }
 
 	@SubscribeMessage('createDirectRoom')
@@ -53,8 +53,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		try { await this.channelService.createDirectChannel(user, body.user_id); }
 		catch (error) {
-			console.log(error);
-			this.server.emit('error', error)
+			// console.log(error);
+			client.emit('error', error);
 		}
 		this.server.emit('newRoom');
 	}
@@ -68,13 +68,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		try { await this.channelService.addUser(body.id, user, body.password); }
 		catch (error) {
 			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 	
 		this.chatService.joinRoom(client, body.id);
 	
 		this.server.emit('updateRoom');
     }
+
+	@SubscribeMessage('addUserPrivate')
+	async addUserPrivate(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	{
+		const user = await this.chatService.get_ws_user(client);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+		
+		try { await this.channelService.addUserPrivate(body.id, body.user_id); }
+		catch (error) { client.emit('error', error); }
+
+		this.server.emit('updateRoom');
+		this.server.emit('newRoom');
+	}
 
 	@SubscribeMessage('joinSocket')
 	async joinSocket(@MessageBody() body: any, @ConnectedSocket() client: Socket)
@@ -97,11 +111,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		try { await this.channelService.rmUser(body.id, user); }
 		catch (error) {
-			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
+			this.server.emit('newRoom')
+			client.emit('channelRemoved');
 		}
 		this.chatService.leaveRoom(client, body.id);
-
 		this.server.emit('updateRoom');
 	}
 
@@ -115,7 +129,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		try { await this.channelService.newMessage(body.id, user, body.msg); } 
 		catch (error) { 
 			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 
 		this.server.emit('updateRoom');
@@ -131,7 +145,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		try { await this.channelService.kickUser(user, body.id, body.user_id)}
 		catch (error) { 
 			// console.log(error); 
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 
 		this.server.emit('updateRoom');
@@ -147,7 +161,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		try { await this.channelService.addAdmin(user, body.id, body.user_id)}
 		catch (error) {
 			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 
 		this.server.emit('updateRoom');
@@ -163,7 +177,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		try { await this.channelService.rmAdmin(user, body.id, body.user_id)}
 		catch (error) {
 			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 
 		this.server.emit('updateRoom');
@@ -175,11 +189,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
-		
-		try { await this.channelService.addMuted(user, body.id, body.user_id, 1)}
+
+		try { await this.channelService.addMuted(user, body.id, body.user_id, Number(body.muted_time))}
 		catch (error) {
 			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 
 		this.server.emit('updateRoom');
@@ -195,9 +209,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		try { await this.channelService.rmMuted(user, body.id, body.user_id)}
 		catch (error) {
 			// console.log(error);
-			this.server.emit('error', error)
+			client.emit('error', error);
 		}
 
 		this.server.emit('updateRoom');
+	}
+
+	@SubscribeMessage('blockUser')
+	async blockUser(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	{
+		const user = await this.chatService.get_ws_user(client);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+		
+		try { }
+		catch (error) {
+			// console.log(error);
+			client.emit('error', error);
+		}
 	}
 }

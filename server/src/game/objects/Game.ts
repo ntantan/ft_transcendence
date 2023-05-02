@@ -1,3 +1,5 @@
+import { Room } from "../entities/room.entities";
+
 export class Game
 {
 	game_width: number;
@@ -87,7 +89,7 @@ export class Game
 			this.p2_moveup();
 	}
 
-	ball_move()
+	ball_move(room: Room)
 	{
 		// Make the ball bounce up and down
 		if (this.ball_y + this.ball_vy < 0 || this.ball_y + this.ball_vy > this.game_height - this.ball_height)
@@ -151,7 +153,11 @@ export class Game
 
 			const game_status = this.check_game_status();
 			if (game_status)
+			{
+				room.player1_score = String(this.p1_score);
+				room.player2_score = String(this.p2_score);
 				return (game_status);
+			}
 		}
 
 		return (null);
@@ -160,9 +166,9 @@ export class Game
 	check_game_status()
 	{
 		if (this.p1_score >= 2)
-			return ("Player 1 Win");
+			return ("1");
 		if (this.p2_score >= 2)
-			return ("Player 2 Win");
+			return ("2");
 	}
 
 	randomDirection() {

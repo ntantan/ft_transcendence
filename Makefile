@@ -18,7 +18,7 @@ set_ip:
 	hostname -i >> ./client/.env;\
 
 clean:	
-	docker-compose down -v --rmi all
+	docker-compose down --rmi all
 
 vclean:
 	docker rm postgres

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException, StreamableFile, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { Friend } from './entities/friend.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,7 +13,7 @@ import { createReadStream } from 'fs';
 import { join } from 'path';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { Blocked } from './entities/blocked.entity';
-import { authenticator } from 'otplib';
+
 
 @Injectable()
 export class UsersService {
@@ -68,8 +68,7 @@ export class UsersService {
             (await Promise.all(
                 updateUserDto.blocked.map(blocked => this.preloadBlocked(blocked)),
             ));
-        const user = await this.userRepository.preload({
-            //username: (await this.findOne(id)).username,
+        let user = await this.userRepository.preload({
             id: id,
             ...updateUserDto,
             friends,
@@ -78,7 +77,18 @@ export class UsersService {
         if (!user) {
             throw new NotFoundException(`User #${id} not found`);
         }
-        return this.userRepository.save(user);
+        try {
+            user = await this.userRepository.save(user);
+        } catch (error) {
+            if (error.code === '23505') {
+                throw new BadRequestException("Username already exists");
+            }
+            else {
+                console.log(error + " in usersService update");
+                throw new InternalServerErrorException();
+            }
+        }
+        return user;
     }
 
     async updateAvatar(fileName: string, id: number) {
@@ -110,28 +120,48 @@ export class UsersService {
             friend.userId = friendAsUser.id;
             this.friendRepository.save(friend);
         }
-        user.friends.push(friend);
+        if (user.friends.find(oldFriend => oldFriend.userId === friendId) === undefined)
+            user.friends.push(friend);
         return await this.userRepository.save(user);
     }
 
     async blockUser(id: number, friendId: number): Promise<User> {
+        const user = await this.deleteFriend(id, friendId);
+        let blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
+        if (!blocked) {
+            blocked = new Blocked();
+            blocked.userId = friendId;
+            this.blockedRepository.save(blocked);
+        }
+        user.blocked.push(blocked);
+        return await this.userRepository.save(user);
+    }
+    
+    async unblockUser(id: number, friendId: number): Promise<User> {
         const user = await this.findOne(id);
-        const blockedAsUser = await this.findOne(friendId);
+        const blockedToDelete = await this.findOne(friendId);
 
-        if (!user || !blockedAsUser) {
+        if (!user || !blockedToDelete) {
+            throw new NotFoundException(`User(s) not found`);
+        }
+        const blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
+        if (blocked) {
+            user.blocked = user.blocked.filter(blocked => blocked.userId !== friendId);
+        }
+        return await this.userRepository.save(user);
+    }
+
+    async deleteFriend(id: number, friendId: number): Promise<User> {
+        const user = await this.findOne(id);
+        const friendToDelete = await this.findOne(friendId);
+
+        if (!user || !friendToDelete) {
             throw new NotFoundException(`User(s) not found`);
         }
         const friend = await this.friendRepository.findOne({ where: [{ userId: friendId }] });
         if (friend) {
             user.friends = user.friends.filter(friend => friend.userId !== friendId);
         }
-        let blocked = await this.blockedRepository.findOne({ where: [{ userId: friendId }] });
-        if (!blocked) {
-            blocked = new Blocked();
-            blocked.userId = blockedAsUser.id;
-            this.blockedRepository.save(blocked);
-        }
-        user.blocked.push(blocked);
         return await this.userRepository.save(user);
     }
 
@@ -188,6 +218,30 @@ export class UsersService {
         }
     }
 
+    async loseUp(user: User) {
+        const queryRunner = this.connection.createQueryRunner();
+
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            user.lose++;
+
+            const loseUpEvent = new Event();
+            loseUpEvent.name = 'lose_up_user';
+            loseUpEvent.type = 'lose';
+            loseUpEvent.payload = { userId: user.id };
+
+            await queryRunner.manager.save(user);
+            await queryRunner.manager.save(loseUpEvent);
+
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
     private async preloadFriend(friend: Friend): Promise<Friend> {
         const existingFriend = await this.friendRepository.findOne({ where: [{ userId: friend.userId }] });
         if (existingFriend) {
@@ -206,11 +260,12 @@ export class UsersService {
 
     async saveUserInfo(token: string, info: { login: string, imgUrl: string }): Promise<User> {
         const user = await this.userRepository.findOne({
-            where: [{ username: info.login }],
-            relations: ['friends'],
+            where: [{ login: info.login }],
+            relations: ['friends', 'blocked'],
         });
         if (!user) {
             const createUserDto: CreateUserDto = {
+                login: info.login,
                 username: info.login,
                 authToken: token,
                 avatar: info.imgUrl,
@@ -220,6 +275,7 @@ export class UsersService {
                 lose: 0,
                 two_fa: false,
                 secret: "",
+                two_fa_logged: false,
                 friends: [],
                 blocked: [],
             };
@@ -228,23 +284,4 @@ export class UsersService {
         return user;
     }
 
-    async get2faSecret(id: number): Promise<User> {
-        const user = await this.findOne(id);
-        if (!user) {
-            throw new NotFoundException(`User #${id} not found`);
-        }
-        const secret = authenticator.generateSecret();
-        user.secret = secret;
-        this.userRepository.save(user);
-        return user;
-    }
-
-    async verify2fa(id: number, code: any): Promise<any> {
-        const user = await this.findOne(id);
-        if (!user) {
-            throw new NotFoundException(`User #${id} not found`);
-        }
-        const isValid = authenticator.verify({ token: code.code, secret: user.secret });
-        return { verified: isValid };
-    }
 }

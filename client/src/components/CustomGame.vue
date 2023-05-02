@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { gameStore } from "../stores/game";
+import { useGameStore } from "../stores/game";
 import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
@@ -15,7 +15,7 @@ export default defineComponent({
 			gamemod1: gamemod1,
 			gamemod2: gamemod2,
 			rooms: [],
-			gameStore,
+			gameStore: useGameStore(),
 			model: 1,
 			opponentImage: gameStore.invitedUser.avatar,
 		};

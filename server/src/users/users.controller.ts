@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query, Request, UseGuards, UseInterceptors, UploadedFile, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, UseGuards, UseInterceptors, UploadedFile, StreamableFile, HttpException, HttpStatus } from '@nestjs/common';
 import { Res } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -6,7 +6,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Express } from 'express';
+import { Express, Response } from 'express';
 import 'multer';
 import * as fs from 'fs';
 import { createReadStream } from 'fs';
@@ -37,8 +37,8 @@ export class UsersController {
     // put : replaces all the resource
     // patch : modifies partially
     @Patch(':id')
-    update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
-        return this.usersService.update(id, updateUserDto);
+    async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto, @Res() res: Response): Promise<User> {
+        return await this.usersService.update(id, updateUserDto);
     }
 
     @Post('/avatar/:id')
@@ -46,18 +46,26 @@ export class UsersController {
     async updateAvatar(@UploadedFile() file: Express.Multer.File, @Param('id') id: number) {
         await fs.writeFileSync(process.cwd() + "/public/" + file.originalname, file.buffer);
         return await this.usersService.updateAvatar(file.originalname, id);
-        //https://github.dev/oumeimatt/ft_transcendence/tree/main/src/frontend/src
-        //settings/avatar
     }
 
-    @Post(':id/friends/:friendId')
+    @Post(':id/addFriend/:friendId')
     async addFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
         return await this.usersService.addFriend(id, friendId);
     }
-    
+
     @Post(':id/block/:blockedId')
     async blockUser(@Param('id') id: number, @Param('blockedId') blockedId: number): Promise<User> {
         return await this.usersService.blockUser(id, blockedId);
+    }
+
+    @Post(':id/unblock/:blockedId')
+    async unblockUser(@Param('id') id: number, @Param('blockedId') blockedId: number): Promise<User> {
+        return await this.usersService.unblockUser(id, blockedId);
+    }
+
+    @Post(':id/deleteFriend/:friendId')
+    async deleteFriend(@Param('id') id: number, @Param('friendId') friendId: number): Promise<User> {
+        return await this.usersService.deleteFriend(id, friendId);
     }
 
     @Get('/avatar/:filename')
@@ -70,13 +78,4 @@ export class UsersController {
         return this.usersService.remove(id);
     }
 
-    @Get(':id/2faSecret')
-    async get2faSecret(@Param('id') id: number): Promise<User> {
-        return await this.usersService.get2faSecret(id);
-    }
-
-    @Post(':id/verify2fa')
-    async verify2fa(@Param('id') id: number, @Body() code: string): Promise<any> {
-        return await this.usersService.verify2fa(id, code);
-    }
 }

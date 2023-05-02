@@ -8,12 +8,14 @@ import { Server, Socket } from 'socket.io';
 import { HistoryService } from './history.service';
 import { User } from 'src/users/entities/user.entity';
 import { Player } from './objects/Player';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class GameService {
 
 	constructor(private readonly historyService: HistoryService, 
 				private readonly schedulerRegistry: SchedulerRegistry,
+				private readonly userService: UsersService
 				) {}
 
 	//		CONTROLLER		//
@@ -37,12 +39,31 @@ export class GameService {
 
 		if (!find)
 		{
-			console.log(client.id, id, "connected to game socket");
+			// console.log(client.id, id, "connected to game socket");
+			this.try_reconnect(id, client);
 			return (this.player.push({id, socket_id}));
 		}
-		console.log(id, "already connected to game socket");
+		// console.log(id, "already connected to game socket");
 		client.disconnect();
 		return (null);
+	}
+
+	try_reconnect(id: string, client: Socket)
+	{
+		const find = this.rooms.find((room) => {
+			if (room.p1_copy == id && room.player_1 == undefined)
+			{
+				room.player_1 = id;
+				client.join(room.name);
+				return (room);
+			}
+			else if (room.p2_copy == id && room.player_2 == undefined)
+			{
+				room.player_2 = id;
+				client.join(room.name);
+				return (room);
+			}
+		})
 	}
 
 	player_leave(id: string, socket_id: string)
@@ -53,15 +74,17 @@ export class GameService {
 			this.player.splice((this.player.indexOf(find)), 1);
 	}
 
-	send_invitation(server: Server, id: string, room_name: string, user: User)
+	send_invitation(client: Socket, server: Server, id: string, room_name: string, user: User)
 	{
 		const find = this.player.find((player) => player.id == id);
 		if (!find)
+		{
+			client.emit("error", {message: "User is disconnected, leave and try again."})
 			return;
-		console.log(find.socket_id)
-		// cannot send to itself
-		// server.to(find.socket_id).emit('gameInvite', {room_name: room_name});
-		server.emit('gameInvite', {room_name: room_name, inviter: user.username});
+		}
+		console.log(find.socket_id);
+		console.log(room_name, user.username);
+		server.to(find.socket_id).emit('gameInvite', {room_name: room_name, inviter: user.username});
 	}
 
 	//		ROOMS		//
@@ -74,6 +97,10 @@ export class GameService {
 			mod: '1',
 			player_1: "ia1",
 			player_2: "ia2",
+			p1_copy: "",
+			p2_copy: "",
+			player1_score: undefined,
+			player2_score: undefined,
 			end_status: null,
 		},
 		{
@@ -84,6 +111,10 @@ export class GameService {
 			mod: '3',
 			player_1: "ia1",
 			player_2: "ia2",
+			p1_copy: "",
+			p2_copy: "",
+			player1_score: undefined,
+			player2_score: undefined,
 			end_status: null,
 		},
 	];
@@ -100,7 +131,8 @@ export class GameService {
 		{
 			for (var room of this.rooms)
 			{
-				if (room.name == "test room" 
+				if (room.name == "test room"
+				|| room.state != "waiting"
 				|| room.name == "ia room" 
 				|| room.mod != mod.toString()
 				|| room.name.includes("custom")) // Skip the test room, will be deleted later
@@ -143,7 +175,8 @@ export class GameService {
 	{
 		if (room.player_1 && room.player_2)
 		{
-
+			room.p1_copy = room.player_1;
+			room.p2_copy = room.player_2;
 			setTimeout(() => {
 				server.to(room.name).emit("startGame");
 			}, 1000);
@@ -159,18 +192,45 @@ export class GameService {
 	{
 		if (room.state === "ending")
 			return;
+		room.state = "ending";
 
 		const roomcpy = Object.assign({}, room);
 		const create = await this.historyService.create({
-			"player1": roomcpy.player_1,
-			"player2": roomcpy.player_2,
+			"player1": roomcpy.p1_copy,
+			"player2": roomcpy.p2_copy,
+			"player1_score": roomcpy.player1_score,
+			"player2_score": roomcpy.player2_score,
 			"gamemod": roomcpy.mod,
 			"winner": roomcpy.end_status,
 			"date": new Date(),
 		});
 
-		room.state = "ending";
 		server.to(room.name).emit("endGame", { roomName: room.name, endStatus: room.end_status });
+
+		const p1 = await this.userService.findOne(Number(roomcpy.p1_copy));
+		const p2 = await this.userService.findOne(Number(roomcpy.p2_copy));
+		if (roomcpy.end_status == "1")
+		{
+			this.userService.winUp(p1);
+			this.userService.loseUp(p2);
+		}
+		else
+		{
+			this.userService.loseUp(p1);
+			this.userService.winUp(p2);
+		}
+		this.checkLevelUp(p1);
+		this.checkLevelUp(p2);
+	}
+
+	checkLevelUp(user: User)
+	{
+		let i = 0;
+		while (user.win * 2 + user.lose >= user.level * 3 && i < 20)
+		{
+			this.userService.levelUp(user)
+			i++;
+		}
 	}
 
 	createRoom(mod: number, type: string)
@@ -190,6 +250,10 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				p1_copy: "",
+				p2_copy: "",
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -203,6 +267,10 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				p1_copy: "",
+				p2_copy: "",
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -216,6 +284,10 @@ export class GameService {
 				mod: mod.toString(),
 				player_1: undefined,
 				player_2: undefined,
+				p1_copy: "",
+				p2_copy: "",
+				player1_score: undefined,
+				player2_score: undefined,
 				end_status: null,
 			};
 		}
@@ -247,14 +319,15 @@ export class GameService {
 		this.createInterval(server, find, find.name);
 	}
 
-	getPlayerSide(clientId: string, roomName: string)
+	getPlayerSide(clientId: string, room: Room)
 	{
-		var find = this.rooms.find((room) => room.name === roomName);
-		if (!find)
+		// var find = this.rooms.find((room) => room.name === roomName);
+		// console.log("GPS", room)
+		if (!room)
 			return (0);
-		if (find.player_1 == clientId)
+		if (room.player_1 == clientId)
 			return (1);
-		if (find.player_2 == clientId)
+		if (room.player_2 == clientId)
 			return (2);
 	}
 
@@ -266,28 +339,24 @@ export class GameService {
 
 		if (find.player_1 == clientId || find.player_2 == clientId)
 		{
-			console.log(clientId, "already in the room", roomName);
+			// console.log(clientId, "already in the room", roomName);
 		}
 		else if (!find.player_1)
 		{
-			console.log(clientId, "in slot 1 of", roomName);
+			// console.log(clientId, "in slot 1 of", roomName);
 			find.player_1 = clientId;
 		}
 		else if (!find.player_2)
 		{
-			console.log(clientId, "in slot 2 of", roomName);
+			// console.log(clientId, "in slot 2 of", roomName);
 			find.player_2 = clientId;
 		}
 		else
 		{	
-			console.log("room is full !");
+			// console.log("room is full !");
 			return (null);
 		}
-
-		if (find.player_1 && find.player_2)
-			this.startMatch(server, find);
-			// this.createInterval(server, find, find.name);
-		return (find.name);
+		return (find);
 	}
 
 	leaveRoom(roomName: string, clientId: string)
@@ -324,7 +393,11 @@ export class GameService {
 			client.leave(room.name);
 			// console.log(username, "has left", room.name);
 		}
-		client.rooms.forEach((room) => client.leave(room));
+		// LA C'EST CA QUI FAIT TOUT QUITTER JE PENSE
+		// client.rooms.forEach((room) => {
+		// 	console.log(room);
+		// 	client.leave(room);
+		// });
 		server.to(username).emit("clear");
 	}
 
@@ -358,28 +431,34 @@ export class GameService {
 
 	createInterval(server: Server, room: Room, id: string) 
 	{
-		// setTimeout(() => {
-			const IntervalId = setInterval(() => {
-				if (room.name === "ia room" || room.name === "ia room2")
-					room.game.ia_move();
-	
-				room.end_status = room.game.ball_move();
+		var last_emit = new Date();
+		var current = new Date();
+		const IntervalId = setInterval(() => {
+			if (room.name === "ia room" || room.name === "ia room2")
+				room.game.ia_move();
+
+			if (room.player_1 && room.player_2)
+			{
+				room.end_status = room.game.ball_move(room);
 				server.to(room.name).emit("position", room.game);
-				if (!room.player_1)
-					room.end_status = room.player_1 + " disconnected";
-				else if (!room.player_2)
-					room.end_status = room.player_2 + " disconnected";
-				if (room.end_status && room.name !== "ia room" && room.name !== "ia room2")
+				last_emit = new Date();
+			}
+			else
+			{
+				current = new Date();
+				var dif = Math.abs((last_emit.getTime() - current.getTime()) / 1000);
+				if (dif >= 3)
 				{
-					// if (room.end_status === "Player 1 Win")
-					// 	room.end_status = room.player_1 + " won";
-					// else if (room.end_status === "Player 2 Win")
-					// 	room.end_status = room.player_2 + " won";
-					this.endMatch(server, room);
+					if (!room.player_1)
+						room.end_status = "2";
+					else if (!room.player_2)
+						room.end_status = "1";
 				}
-			}, 10);
-			this.schedulerRegistry.addInterval(id, IntervalId);
-		// }, 5000);
+			}
+			if (room.end_status && room.name !== "ia room" && room.name !== "ia room2")
+				this.endMatch(server, room);
+		}, 10);
+		this.schedulerRegistry.addInterval(id, IntervalId);
 	}
 
 	deleteInterval(id:string)

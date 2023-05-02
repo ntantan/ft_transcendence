@@ -5,12 +5,13 @@ import { io } from "socket.io-client";
 import BannerBar from "./components/BannerBar.vue";
 import NavBar from "./components/NavBar.vue";
 
-import { gameStore } from "./stores/game";
+import { useGameStore } from "./stores/game";
 import { chatStore } from "./stores/chat";
 import router from "./router";
 
 export default defineComponent({
 	name: "App",
+
 
 	components: {
 		BannerBar,
@@ -27,8 +28,9 @@ export default defineComponent({
 
 	data() {
 		return {
-			gameStore,
+			gameStore: useGameStore(),
 			chatStore,
+			// piniaGameStore: gameStore(),
 
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
@@ -43,12 +45,14 @@ export default defineComponent({
 	},
 
 	created() {
+		
 		const localhost = import.meta.env.VITE_LOCALHOST; // ${localhost}
+		
 		this.gameStore.socket = io(`http://localhost:3000/game`, { withCredentials: true });
-
-		this.chatStore.socket = io(`http://localhost:3000/chat`, { withCredentials: true })
+		
+		this.chatStore.socket = io(`http://localhost:3000/chat`, { withCredentials: true });
 	},
-
+	
 	mounted() {
 
 		// Print an error notification
@@ -56,7 +60,11 @@ export default defineComponent({
 			this.sendSnackbar(response.message);
 		});
 
+		this.gameStore.socket.on('error', (response) => {
+			this.sendSnackbar(response.message);
+		})
 		this.gameStore.socket.on('gameInvite', (response) => {
+			console.log("test")
 			this.sendInviteBar("You received an invitation to play from " + response.inviter);
 			this.invite_room = response.room_name;
 			this.invite_player = response.inviter;
@@ -84,6 +92,7 @@ export default defineComponent({
 					this.gameStore.currentRoom = response.roomName;
 			});
 			router.push('/game');
+			console.log(this.gameStore.currentRoom, this.gameStore.inGame)
 		},
 	}
 });
@@ -93,6 +102,7 @@ export default defineComponent({
 	<v-app id="app">
 		<v-main>
 			<banner-bar />
+			<v-divider class="border-opacity-30"></v-divider>
 			<router-view />
 			<nav-bar />
 
@@ -140,5 +150,4 @@ export default defineComponent({
 </template>
 
 <style>
-
 </style>

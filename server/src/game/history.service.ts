@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { CreateHistoryDto } from "./dto/create-history.dto";
 import { History } from "./entities/history.entities";
+import { UsersService } from "src/users/users.service";
 
 @Injectable()
 export class HistoryService {
@@ -10,6 +11,7 @@ export class HistoryService {
 	constructor(
 		@InjectRepository(History)
 		private historyRepository: Repository<History>,
+		private userService: UsersService,
 	) {}
 
 	findAll() 
@@ -17,12 +19,12 @@ export class HistoryService {
 		return (this.historyRepository.find());
 	}
 
-	async findByUser(player: string)
+	async findByUserId(id: string)
 	{
 		const data = await this.historyRepository.find({
 			where: [
-				{ player1: player},
-				{ player2: player},
+				{ player1: id},
+				{ player2: id},
 			],
 		});
 		return (data);

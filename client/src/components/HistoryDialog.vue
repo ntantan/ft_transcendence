@@ -1,4 +1,5 @@
 <script lang="ts">
+import axios from 'axios';
 import { defineComponent } from 'vue';
 
 const HISTORY_URL = "http://localhost:3000/history";
@@ -23,7 +24,13 @@ export default defineComponent({
 
 	methods: {
 		async fetchData() {
-			this.history = await (await fetch(HISTORY_URL)).json();
+			axios.get("http://localhost:3000/history", {withCredentials: true})
+				.then((response) => {
+					this.history = response.data;
+				})
+				.catch((error) => {
+					console.log(error);
+				})
 		},
 
 		formatedDate(str_date: string)

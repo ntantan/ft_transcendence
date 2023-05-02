@@ -4,10 +4,11 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
-import { gameStore } from "@/stores/game";
+import { useGameStore } from "@/stores/game";
 import { userStore } from "@/stores/user";
 import { mergeProps } from "vue";
 import router from "@/router";
+import { mdiRhombusSplit } from "@mdi/js";
 
 const CHANNELS_URL = "http://localhost:3000/channels/";
 
@@ -15,14 +16,15 @@ export default defineComponent ({
     data() {
         return {
             chatStore,
-			gameStore,
-			// userStore,
+			gameStore: useGameStore(),
+			userStore,
             socket: {},
 			isJoined: false,
             room: {},
 			
 			users: [],
 			select_direct_id: "",
+			select_private_id: "",
 			direct_channels: [],
 			private_channels: [],
 			public_channels: [],
@@ -31,6 +33,8 @@ export default defineComponent ({
 			channel_types: ["public", "private", "direct"],
 			n_channel_types: 3,
 			selected_channel_type: 0,
+
+			muted_time: "",
 			
             selectedChannel: "",
             roomName: "",
@@ -39,13 +43,6 @@ export default defineComponent ({
 			pdv: '20px',
 			
 			roomPassword: "",
-			rules: [
-				value => {
-					if (value && value.length < 20)
-						return (true)
-					return ("Field can not be empty")
-				}
-			],
 
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
@@ -65,7 +62,12 @@ export default defineComponent ({
         })
 
 		this.socket.on('updateRoom', () => {
-			this.fetchRoom();
+			if (this.selectedChannel)
+				this.fetchRoom();
+		})
+
+		this.socket.on('channelRemoved', () => {
+			this.fetchAllRooms();
 		})
     },
 
@@ -87,6 +89,7 @@ export default defineComponent ({
 			const find = this.channels.find((channel) => channel.id == this.selectedChannel);
 			if (find)
 				return (find.name);
+			return (null);
 		}
 	},
 
@@ -128,6 +131,7 @@ export default defineComponent ({
 				.then((response) => {
 					this.direct_channels = response.data;
 					this.channelType();
+					// console.log(response.data);
 				})
 				.catch((error) => {
 					console.log(error);
@@ -147,7 +151,7 @@ export default defineComponent ({
         fetchRoom() {
             axios.get((CHANNELS_URL + this.selectedChannel), {withCredentials: true})
             .then((response) => {
-                // console.log(response);
+                // console.log(response.data);
 				this.isJoined = true;
                 this.room = response.data;
 				this.socket.emit('joinSocket', {
@@ -157,26 +161,34 @@ export default defineComponent ({
             .catch((error) => {
 				this.room = {};
 				this.isJoined = false;
-				this.sendSnackbar(error.response.data.message);
-                // console.log(error);
+				// this.sendSnackbar(error.response.data.message);
+                console.log(error);
             })
         },
 
         createNewRoom() {
 			if (!this.roomName)
 				return;
+
+			if (this.roomName.length > 30)
+				this.roomName = this.roomName.substring(0, 30) + "...";
             this.socket.emit('createRoom', {room_name: this.roomName,
 											password: this.passWord, 
 											room_type: this.channel_types[this.selected_channel_type]});
-            this.clearTextArea();
+            // this.clearTextArea();
+			this.roomName = "";
+			this.passWord = "";
             window.scrollTo(0, document.body.scrollHeight);
         },
 
 		// Create a direct mesage room
 		createDirectRoom() {
-			this.socket.emit('createDirectRoom', {
-				user_id: this.select_direct_id,
-			})
+			if (this.select_direct_id)
+			{
+				this.socket.emit('createDirectRoom', {
+					user_id: this.select_direct_id,
+				})
+			}
 		},
 
 		joinRoom() {
@@ -194,7 +206,13 @@ export default defineComponent ({
 
 		//  Add user to a private room
 		privateAddUser() {
-
+			if (this.select_private_id)
+			{
+				this.socket.emit('addUserPrivate', {
+					id: this.selectedChannel,
+					user_id: this.select_private_id
+				})
+			}
 		},
 
         clearTextArea() {
@@ -214,9 +232,24 @@ export default defineComponent ({
         muteUser(channel_user: any) {
             this.socket.emit('addMute', {
 								id: this.selectedChannel, 
-								user_id: channel_user.user.id})
+								user_id: channel_user.user.id,
+								muted_time: '99999'})
             // ajouter temps de mute
         },
+
+		unmuteUser(channel_user: any) {
+			this.socket.emit('rmMute', {
+				id: this.selectedChannel,
+				user_id: channel_user.user.id
+			})
+		},
+
+		timedMuteUser(channel_user: any, time: string) {
+            this.socket.emit('addMute', {
+								id: this.selectedChannel, 
+								user_id: channel_user.user.id,
+								muted_time: time})
+		},
 
         kickUser(channel_user: any) {
             this.socket.emit('kickUser', {
@@ -249,7 +282,12 @@ export default defineComponent ({
 		toProfile(channel_user: any)
 		{
 			const id = channel_user.user.id;
-			
+			router.push({ path: '/user/' + id});
+		},
+
+		blockUser(channel_user: any)
+		{
+
 		},
 
 		sendSnackbar(msg: string)
@@ -268,18 +306,23 @@ export default defineComponent ({
 				this.channels = this.direct_channels;
 		},
 
+		strToDate(strdate: string)
+		{
+			const current = new Date(Date.parse(strdate));
+			return (current.toLocaleString("fr"))
+		},
+
 		mergeProps,
     },
 });
 </script>
 
 <template>
-    <v-card width="1200" class="h-chat mx-auto ma-6">
+	<div class="d-flex justify-center">
+    <v-card width="1200" class="h-chat ma-6">
         <v-row>
             <v-col cols="3">
-
                 <v-card class="h-chat">
-
 					<h2 class="d-flex justify-center align">Channels</h2>
 
 					<v-window
@@ -309,12 +352,12 @@ export default defineComponent ({
 						:key="n"
 						>
 						<v-card height="50px" class="d-flex justify-center align-center">
-							<span>{{ channel_types[selected_channel_type] }}</span>
+							<h3>{{ channel_types[selected_channel_type] }}</h3>
 						</v-card>
 						</v-window-item>
 					</v-window>
 
-					<v-card height="700" class="scroll my-3">
+					<v-card height="700" class="scroll my-2">
 						<v-item-group v-model="selectedChannel">
 							<v-item v-for="channel in channels" :value="channel.id" v-slot="{isSelected, selectedClass, toggle}">
 								<v-card :class="['d-flex pa-3', selectedClass]" @click="toggle">
@@ -326,7 +369,7 @@ export default defineComponent ({
 
 					<div v-if="channel_types[selected_channel_type] == 'public'">
 						<v-form @submit.prevent>
-							<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+							<v-text-field clearable v-model="this.roomName" label="Room name"></v-text-field>
 							<v-text-field v-model="this.passWord" label="Password"></v-text-field>
 							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
 						</v-form>
@@ -334,7 +377,7 @@ export default defineComponent ({
 
 					<div v-if="channel_types[selected_channel_type] == 'private'">
 						<v-form @submit.prevent>
-							<v-text-field clearable v-model="this.roomName" :rules="rules" label="Room name"></v-text-field>
+							<v-text-field clearable v-model="this.roomName" label="Room name"></v-text-field>
 							<v-btn type="submit" block @click="this.createNewRoom()">create room</v-btn>
 						</v-form>
 					</div>
@@ -352,24 +395,25 @@ export default defineComponent ({
 
             <v-col align-self="end">
 
-				<v-card class="h-options mx-auto">
-
-					<v-row v-if="!isJoined && selectedChannel">
+				<v-card class="h-options">
+					<v-row v-if="!isJoined && selectedRoomname">
 						<v-col class="ma-2" align-self="center" cols="5">
 							<v-card-title>{{ selectedRoomname }}</v-card-title>
 						</v-col>
-						<v-col class="mr-3"  cols="4" align-self="center">
-							<v-text-field
-								style="width: 200px;"
-								v-model="roomPassword"
-								label="Leave empty if not required"
-								variant="underlined"
-								clearable>
-							</v-text-field>
-						</v-col>
-						<v-col align-self="center">
-							<v-btn width="100" color="primary" @click="joinRoom()">Join</v-btn>
-						</v-col>
+						<!-- <div v-if="this.channel_types[this.selected_channel_type] == 'public'"> -->
+							<v-col v-if="this.channel_types[this.selected_channel_type] == 'public'" class="mr-3"  cols="4" align-self="center">
+								<v-text-field
+									style="width: 200px;"
+									v-model="roomPassword"
+									label="Leave empty if not required"
+									variant="underlined"
+									clearable>
+								</v-text-field>
+							</v-col>
+							<v-col align-self="center" v-if="this.channel_types[this.selected_channel_type] == 'public'">
+								<v-btn width="100" color="primary" @click="joinRoom()">Join</v-btn>
+							</v-col>
+						<!-- </div> -->
 					</v-row>
 
 					<v-row  v-if="isJoined">
@@ -380,24 +424,45 @@ export default defineComponent ({
 						<v-col cols="4">
 						</v-col>
 
-						<v-col align-self="center">
+						<v-col v-if="this.channel_types[this.selected_channel_type] !== 'direct'" align-self="center">
 							<v-btn width="100" color="primary" @click="leaveRoom()">Leave</v-btn>
 						</v-col>
 					</v-row>
 
 				</v-card>
-				<v-card class="h-message my-2 scroll">
-					<v-list>
-                        <!-- <ul v-for="message in this.room.messages" :key="message">
-                            <li> -->
-                                <!-- mise en page messages -->
-								<v-card width="200" v-for="message in this.room.messages" style="overflow-wrap: break-word;">
-									{{ message.date }}
-									{{ message.message }}
-								</v-card>
-                            <!-- </li>
-                        </ul> -->
-					</v-list>
+				<v-card class="h-message my-2 scroll pa-2 w-90">
+					<v-card 
+					v-for="message in this.room.messages"
+					style="overflow-wrap: break-word;"  
+					class="ma-2"
+					>
+					
+					<v-hover v-slot="{ isHovering, props }">
+						<v-card
+						color="primary"
+						:elevation="isHovering ? 8 : 2"
+						:class="{ 'on-hover': isHovering }"
+						v-bind="props"
+						variant="outlined"
+						>
+						<template v-slot:title>
+							<v-avatar size="30" class="mr-2">
+								<v-img :src="message.user.avatar"></v-img>
+							</v-avatar>
+							{{ message.user.username }}
+						</template>
+
+						<v-card-text>
+							<div style="overflow-wrap: break-word;">
+								{{ message.message }}
+							</div>
+							<div v-if="isHovering" style="float: right; overflow-wrap: break-word;" >
+								{{ strToDate(message.date) }}
+							</div>
+						</v-card-text>
+						</v-card>
+					</v-hover>
+					</v-card>
 				</v-card>
 
 				<v-text-field v-model="messageText" label="Enter your message here" @keydown.enter="SubmitNewMessage()">						
@@ -406,6 +471,7 @@ export default defineComponent ({
 
             <v-col cols="3">
                 <v-card class="h-chat scroll">
+<<<<<<< HEAD
                     <h2 class="d-flex justify-center">User</h2>
 					
                     <v-menu v-for="user in this.room.channel_users" :key="user">
@@ -450,18 +516,74 @@ export default defineComponent ({
                         </v-list-item>
                     </v-list>
                     </v-menu>
+=======
+                    <h2 class="d-flex justify-center">Users</h2>
+>>>>>>> bf9aed460cfdacd1b27259fbb74b7a39bb6e41d1
 
-					<div v-if="this.room.type == 'private'" class="mr-2 mt-4">
-						<v-form @submit.prevent>
-							<v-autocomplete v-model="this.select_direct" :items="this.users" item-title="username" item-value="id" label="Select user"></v-autocomplete>
-							<v-btn type="submit" block @click="this.privateAddUser()">Add</v-btn>
-						</v-form>
+					<v-menu v-for="user in this.room.channel_users" :key="user">
+						<template v-slot:activator="{ props: menu }">
+							<v-tooltip>
+								<template v-slot:activator="{ props: tooltip }">
+									<v-btn color="primary" v-bind="mergeProps(menu, tooltip)" class="d-flex ma-2">{{ user.user.username }}</v-btn> 
+								</template>
+							</v-tooltip>
+						</template>
+						
+						<!-- && user.user.id !== this.userStore.user.id"> -->
+						<v-list v-if="channel_types[selected_channel_type] !== 'direct' && user.user.id !==this.userStore.user.id">
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
+									<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
+									<v-btn-group
+									color="secondary"
+									>
+										<v-btn value="1" @click="timedMuteUser(user, '1')">1</v-btn>
+										<v-btn value="10" @click="timedMuteUser(user, '10')">10</v-btn>
+										<v-btn value="60" @click="timedMuteUser(user, '60')">60</v-btn>
+									</v-btn-group>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn v-if="!user.admin" type="submit" block @click="this.addAdmin(user)" color="primary">admin</v-btn>
+									<v-btn v-if="user.admin" type="submit" block @click="this.rmAdmin(user)" color="primary">unadmin</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn type="submit" block @click="this.blockUser(user)" color="red">Block</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+						</v-list>
+					</v-menu>
+				
+				<div v-if="this.room.type == 'private'" class="ma-2 mt-4">
+					<v-form @submit.prevent>
+						<v-autocomplete v-model="this.select_private_id" :items="this.users" item-title="username" item-value="id" label="Select user"></v-autocomplete>
+						<v-btn type="submit" block @click="this.privateAddUser()">Add</v-btn>
+					</v-form>
 					</div>
                 </v-card>
             </v-col>
         </v-row>
     </v-card>
-
+</div>
 	<!-- error bar -->
 	<div class="text-center">
 		<v-snackbar
@@ -517,5 +639,7 @@ export default defineComponent ({
 .h-sub-options{
 	height: 40px;
 }
+
+$card-transition-duration: 5.0s;
 
 </style>

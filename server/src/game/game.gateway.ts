@@ -61,7 +61,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		this.gameService.leaveAllRoom(client, this.server, String(user.id));
 		client._cleanup();
 		this.gameService.player_leave(String(user.id), client.id);
-		console.log(client.id, "disconnected");
+		// console.log(client.id, "disconnected");
 	}
 	
 	afterInit(server: any) {
@@ -78,7 +78,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		const room = await this.gameService.joinQueue(client, this.server, data.mod, user);
 		client.join(room.name);
 		this.gameService.startMatch(this.server, room);
-		const player_side = this.gameService.getPlayerSide(String(user.id), room.name);
+		const player_side = this.gameService.getPlayerSide(String(user.id), room);
 		return ({ player_side: player_side, roomName: room.name });
 	}
 
@@ -89,11 +89,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 
-		let room = this.gameService.createCustomRoom(client, this.server, data.mod, user);
+		var room = this.gameService.createCustomRoom(client, this.server, data.mod, user);
 		client.join(room.name);
 		this.gameService.startMatch(this.server, room);
-		const player_side = this.gameService.getPlayerSide(String(user.id), room.name);
-		this.gameService.send_invitation(this.server, data.invite_id, room.name, user);
+		const player_side = this.gameService.getPlayerSide(String(user.id), room);
+		this.gameService.send_invitation(client, this.server, data.invite_id, room.name, user);
 		return ({ player_side: player_side, roomName: room.name });
 	}
 
@@ -104,14 +104,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 		if (!user)
 			return;
 		
-		const roomName = this.gameService.joinRoom(data.roomName, String(user.id), this.server);
-		if (roomName)
+		this.gameService.leaveAllRoom(client, this.server, String(user.id));
+		var room = this.gameService.joinRoom(data.roomName, String(user.id), this.server);
+		if (room)
 		{
-			this.gameService.leaveAllRoom(client, this.server, String(user.id));
-			client.join(roomName);
+			client.join(room.name);
 		}
-		const player_side = this.gameService.getPlayerSide(String(user.id), roomName);
-		return ({ player_side: player_side, roomName: roomName });
+		var player_side = this.gameService.getPlayerSide(String(user.id), room);
+		if (room.player_1 && room.player_2)
+			this.gameService.startMatch(this.server, room);
+		return ({ player_side: player_side, roomName: room.name });
 	}
 
 	@SubscribeMessage('leaveRoom')
