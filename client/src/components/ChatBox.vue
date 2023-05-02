@@ -473,9 +473,8 @@ export default defineComponent ({
                 <v-card class="h-chat scroll">
                     <h2 class="d-flex justify-center">User</h2>
 					
-                    <v-menu v-for="user in this.room.channel_users" :key="user">
+                    <!-- <v-menu v-for="user in this.room.channel_users" :key="user">
                         <template v-slot:activator="{ props: menu }">
-							<!-- <v-row> -->
 							<div class="d-flex justify-center mb-0 bg-surface-variant flex-column">
                             <v-tooltip>
                                 <template v-slot:activator="{ props: tooltip }">
@@ -483,7 +482,6 @@ export default defineComponent ({
                                 </template>
                             </v-tooltip>
 							</div>
-							<!-- </v-row> -->
                         </template>
                     <v-list>
                         <v-list-item>
@@ -514,7 +512,7 @@ export default defineComponent ({
 							</v-list-item-title>
                         </v-list-item>
                     </v-list>
-                    </v-menu>
+                    </v-menu> -->
 
 					<v-menu v-for="user in this.room.channel_users" :key="user">
 						<template v-slot:activator="{ props: menu }">
