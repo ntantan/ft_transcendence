@@ -33,11 +33,15 @@ export class ChannelService
 	// Returns one room with all messages
 	async getChannel(id: string, user: User)
 	{
+		const blockedUsers = await this.usersService.getBlockedUsers(user);
+		const blockedUsersIds = blockedUsers.map(user => user.id);
 		const channel = await this.channelRepository.findOne({
 			where: [{
 				id: Number(id),
 				messages: {
-					user: Not(In(user.blocked)),
+					user: {
+						id: Not(In(blockedUsersIds)),
+					}
 				}
 			}],
 			relations: {

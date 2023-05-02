@@ -284,4 +284,17 @@ export class UsersService {
         return user;
     }
 
+    async getBlockedUsers(user: User) : Promise<User[]> {
+        if (user.blocked === undefined) {
+            return [];
+        }
+        const blockedUsers = [];
+        for (const blocked of user.blocked) {
+            const blockedUser = await this.findOne(blocked.userId);
+            if (blockedUser) {
+                blockedUsers.push(blockedUser);
+            }
+        }
+        return blockedUsers;
+    }
 }

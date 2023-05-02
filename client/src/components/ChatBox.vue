@@ -47,6 +47,7 @@ export default defineComponent ({
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
 			timeout: 3000,
+			URL: "http://localhost:3000/users/avatar/",
         }
     },
 
@@ -285,10 +286,53 @@ export default defineComponent ({
 			router.push({ path: '/user/' + id});
 		},
 
-		blockUser(channel_user: any)
-		{
+        isBlocked(channel_user: any): boolean {
+            const blocked = userStore.user.blocked;
+            if (blocked === undefined) {
+                return false;
+            }
+            for (let i = 0; i < blocked.length; i++) {
+                if (blocked[i].userId === channel_user.user.id) {
+                    return true;
+                }
+            }
+            return false;
+        },
 
+		async blockUser(channel_user: any)
+		{
+			const reponse = confirm("Are you sure you want to block " + channel_user.user.username + " ?");
+			if (!reponse)
+				return ;
+			console.log("blockUser", channel_user.user.username);
+			const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/block/" + channel_user.user.id, {
+				method: "POST",
+				credentials: "include",
+			});
+			const data = await res.json();
+			if (data.error) {
+				this.sendSnackbar(data.error);
+				return ;
+			}
+			else
+				this.sendSnackbar("Successfully blocked user");
+			userStore.updateUser(data);
 		},
+
+		async unblockUser(channel_user: any) {
+            const res = await fetch("http://localhost:3000/users/" + userStore.user.id + "/unblock/" + channel_user.user.id, {
+                method: "POST",
+                credentials: "include",
+            });
+            const data = await res.json();
+			if (data.error) {
+				this.sendSnackbar(data.error);
+				return ;
+			}
+			else
+				this.sendSnackbar("Successfully unblocked user");
+            userStore.updateUser(data);
+        },
 
 		sendSnackbar(msg: string)
 		{
@@ -311,6 +355,13 @@ export default defineComponent ({
 			const current = new Date(Date.parse(strdate));
 			return (current.toLocaleString("fr"))
 		},
+
+        getAvatar(channel_user: any): string {
+            if (channel_user.avatar.startsWith("https://cdn.intra.42.fr/")) {
+                return channel_user.avatar;
+            }
+            return this.URL + channel_user.avatar;
+        },
 
 		mergeProps,
     },
@@ -447,7 +498,7 @@ export default defineComponent ({
 						>
 						<template v-slot:title>
 							<v-avatar size="30" class="mr-2">
-								<v-img :src="message.user.avatar"></v-img>
+								<v-img :src="this.getAvatar(message.user)"></v-img>
 							</v-avatar>
 							{{ message.user.username }}
 						</template>
@@ -561,7 +612,8 @@ export default defineComponent ({
 							</v-list-item>
 							<v-list-item>
 								<v-list-item-title>
-									<v-btn type="submit" block @click="this.blockUser(user)" color="red">Block</v-btn>
+									<v-btn v-if="!this.isBlocked(user)" type="submit" block @click="this.blockUser(user)" color="red">Block</v-btn>
+									<v-btn v-else type="submit" block @click="this.unblockUser(user)" color="green">Unblock</v-btn>
 								</v-list-item-title>
 							</v-list-item>
 						</v-list>
