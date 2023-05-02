@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { gameStore } from "../stores/game";
+import { useGameStore } from "../stores/game";
 import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
@@ -15,7 +15,7 @@ export default defineComponent({
 			gamemod1: gamemod1,
 			gamemod2: gamemod2,
 			rooms: [],
-			gameStore,
+			gameStore: useGameStore(),
 			model: 1,
 		};
 	},
@@ -25,12 +25,14 @@ export default defineComponent({
 	},
 	
 	created() {
-		this.gameStore.inGame = 0;
-		console.log()
-		if (localStorage.getItem("inGame"))
-			this.gameStore.inGame = Number(localStorage.getItem("inGame"))
-		if (localStorage.getItem("currentRoom"))
-			this.gameStore.currentRoom = localStorage.getItem("currentRoom")
+		// this.gameStore.inGame = 0;
+		// if (this.gameStore.inGame == 0)
+		// {
+		// 	if (localStorage.getItem("inGame"))
+		// 		this.gameStore.inGame = Number(localStorage.getItem("inGame"))
+		// 	if (localStorage.getItem("currentRoom"))
+		// 		this.gameStore.currentRoom = localStorage.getItem("currentRoom")
+		// }
 	},
 	
 	mounted() {
