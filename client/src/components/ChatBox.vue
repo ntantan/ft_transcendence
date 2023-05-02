@@ -471,7 +471,6 @@ export default defineComponent ({
 
             <v-col cols="3">
                 <v-card class="h-chat scroll">
-<<<<<<< HEAD
                     <h2 class="d-flex justify-center">User</h2>
 					
                     <v-menu v-for="user in this.room.channel_users" :key="user">
@@ -516,9 +515,6 @@ export default defineComponent ({
                         </v-list-item>
                     </v-list>
                     </v-menu>
-=======
-                    <h2 class="d-flex justify-center">Users</h2>
->>>>>>> bf9aed460cfdacd1b27259fbb74b7a39bb6e41d1
 
 					<v-menu v-for="user in this.room.channel_users" :key="user">
 						<template v-slot:activator="{ props: menu }">
