@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useGameStore } from "../stores/game";
+import { gameStore } from "../stores/game";
 import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
@@ -15,7 +15,7 @@ export default defineComponent({
 			gamemod1: gamemod1,
 			gamemod2: gamemod2,
 			rooms: [],
-			gameStore: useGameStore(),
+			gameStore,
 			model: 1,
 		};
 	},
@@ -25,7 +25,6 @@ export default defineComponent({
 	},
 	
 	created() {
-		this.gameStore = useGameStore();
 		this.gameStore.inGame = 0;
 		console.log()
 		if (localStorage.getItem("inGame"))
