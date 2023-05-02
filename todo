@@ -1,8 +1,9 @@
-Rapide à faire:
-- Faire une regle pour ne pas recevoir les messages des users qui ont ete bloques et block button
-? blocked is a [] and users is a [] cant unblock user
+à faire:
+- Ban user
+- impossible de voir un channel si il comporte seulement des messages de user qui ont ete bloques par le user a cause de la regle dans getChannel
+- reload mieux apres login 
+- more stats
 
-Un peu long à faire:
 
-Trucs a faire mais flemme:
+flemme:
 - Pouvoir acceder depuis un autre pc ?

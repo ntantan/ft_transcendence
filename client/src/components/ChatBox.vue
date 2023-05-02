@@ -316,6 +316,7 @@ export default defineComponent ({
 			else
 				this.sendSnackbar("Successfully blocked user");
 			userStore.updateUser(data);
+			this.socket.emit('blockUser');
 		},
 
 		async unblockUser(channel_user: any) {
@@ -331,6 +332,7 @@ export default defineComponent ({
 			else
 				this.sendSnackbar("Successfully unblocked user");
             userStore.updateUser(data);
+			this.socket.emit('blockUser');
         },
 
 		sendSnackbar(msg: string)

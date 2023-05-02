@@ -222,10 +222,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!user)
 			throw new UnauthorizedException('Jwt verification failed');
 		
-		try { }
+		try {}
 		catch (error) {
-			// console.log(error);
 			client.emit('error', error);
 		}
+
+		this.server.emit('updateRoom');
 	}
 }

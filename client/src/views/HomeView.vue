@@ -302,6 +302,7 @@ export default defineComponent({
 
 .container {
 	display: flex;
+	justify-content: center;
 }
 
 .target {

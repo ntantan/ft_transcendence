@@ -1,11 +1,11 @@
-import { IsString } from "class-validator";
+import { IsString, IsAlphanumeric } from "class-validator";
 
 export class CreateRoomDTO 
 {
-	@IsString()
+	@IsAlphanumeric()
 	readonly room_name: string;
 
-	@IsString()
+	@IsAlphanumeric()
 	readonly password: string;
 
 	@IsString()
