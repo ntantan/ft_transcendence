@@ -37,7 +37,7 @@ export default defineComponent({
 		},
 
 		getWinRate() {
-			return (this.userStore.user.win / (this.userStore.user.win + this.userStore.user.lose) * 100);
+			return (this.userStore.user.win / (this.userStore.user.win + this.userStore.user.lose) * 100).toFixed(2);
 		},
 	},
 });

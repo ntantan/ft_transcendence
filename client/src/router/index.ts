@@ -31,11 +31,11 @@ const router = createRouter({
 			},
 		},
 		{
-			path: "/game/custom",
+			path: "/custom",
 			name: "custom_game",
 			component: CustomGameView,
 			meta: {
-				title: "Game"
+				title: "Custom"
 			},
 		},
 		{

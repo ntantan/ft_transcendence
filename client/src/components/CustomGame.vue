@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useGameStore } from "../stores/game";
+import { gameStore } from "../stores/game";
 import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
@@ -15,7 +15,7 @@ export default defineComponent({
 			gamemod1: gamemod1,
 			gamemod2: gamemod2,
 			rooms: [],
-			gameStore: useGameStore(),
+			gameStore,
 			model: 1,
 			opponentImage: gameStore.invitedUser.avatar,
 		};
@@ -34,30 +34,6 @@ export default defineComponent({
 	},
 
 	methods: {
-		// joinQueue()
-		// {
-		// 	this.gameStore.socket.emit("joinQueue", { mod: this.model },(response) => {
-		// 		this.gameStore.inGame = response.player_side;
-		// 		if (this.gameStore.inGame)
-		// 			this.gameStore.currentRoom = response.roomName;
-		// 	});
-		// },
-
-		// joinRoom(roomName: string)
-		// {
-		// 	// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
-		// 	this.gameStore.socket.emit("joinRoom", { 
-		// 		roomName: roomName,
-		// 	}, 
-		// 	(response) => {
-		// 		this.gameStore.inGame = response;
-		// 		if (this.gameStore.inGame)
-		// 			this.gameStore.currentRoom = roomName;
-		// 	});
-
-		// 	// this.gameStore.currentRoom = this.rooms.find((room) => room.name === roomName);
-		// },
-
 		startMatch()
 		{
 			// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
@@ -71,8 +47,7 @@ export default defineComponent({
 					this.gameStore.currentRoom = response.roomName;
 				console.log(response)
 			});
-			router.push({path: '/game'});
-			// this.gameStore.currentRoom = this.rooms.find((room) => room.name === roomName);
+			router.push('/game');
 		},
 
 		leaveRoom(roomName: string)
@@ -89,7 +64,12 @@ export default defineComponent({
 			this.gameStore.currentRoom = roomName;
 			this.gameStore.inGame = 3;
 		},
-	} 
+
+	},
+
+	computed: {
+			
+	},
 });
 </script>
 

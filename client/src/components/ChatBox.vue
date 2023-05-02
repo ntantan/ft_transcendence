@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
-import { useGameStore } from "@/stores/game";
+import { gameStore } from "@/stores/game";
 import { userStore } from "@/stores/user";
 import { mergeProps } from "vue";
 import router from "@/router";
@@ -16,7 +16,7 @@ export default defineComponent ({
     data() {
         return {
             chatStore,
-			gameStore: useGameStore(),
+			gameStore,
 			userStore,
             socket: {},
 			isJoined: false,
@@ -274,7 +274,7 @@ export default defineComponent ({
 
         inviteGame(channel_user: any) {
 			this.gameStore.invitedUser = channel_user.user;
-			router.push({ path: '/game/custom' });
+			router.push({ path: '/custom' });
             console.log("inviteGame OK");
         },
 

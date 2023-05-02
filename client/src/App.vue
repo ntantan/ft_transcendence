@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 import BannerBar from "./components/BannerBar.vue";
 import NavBar from "./components/NavBar.vue";
 
-import { useGameStore } from "./stores/game";
+import { gameStore } from "./stores/game";
 import { chatStore } from "./stores/chat";
 import router from "./router";
 
@@ -19,16 +19,16 @@ export default defineComponent({
 	},
 
 	watch: {
-		$route(to) {
-			document.title = `${to.meta.title}`;
-			const link = document.querySelector("[rel='icon']");
-			link.setAttribute('href',to.meta.icon);
-		}
+		// $route(to) {
+		// 	document.title = `${to.meta.title}`;
+		// 	const link = document.querySelector("[rel='icon']");
+		// 	link.setAttribute('href',to.meta.icon);
+		// }
 	},
 
 	data() {
 		return {
-			gameStore: useGameStore(),
+			gameStore,
 			chatStore,
 			// piniaGameStore: gameStore(),
 

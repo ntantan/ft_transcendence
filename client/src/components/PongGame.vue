@@ -1,7 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useGameStore } from "../stores/game"
-import router from "@/router";
+import { gameStore } from "../stores/game"
 
 export default defineComponent({
 
@@ -23,7 +22,7 @@ export default defineComponent({
 			racket: undefined,
 			racket2: undefined,
 
-			gameStore: useGameStore(),
+			gameStore,
 		};
 	},
 
