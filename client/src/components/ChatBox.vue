@@ -36,6 +36,7 @@ export default defineComponent ({
             roomName: "",
             passWord: "",
             messageText: "",
+			pdv: '20px',
 			
 			roomPassword: "",
 			rules: [
@@ -409,11 +410,15 @@ export default defineComponent ({
 					
                     <v-menu v-for="user in this.room.channel_users" :key="user">
                         <template v-slot:activator="{ props: menu }">
+							<!-- <v-row> -->
+							<div class="d-flex justify-center mb-0 bg-surface-variant flex-column">
                             <v-tooltip>
                                 <template v-slot:activator="{ props: tooltip }">
-                                    <v-btn color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn> 
+                                    <v-btn :style="{ margin: pdv }" color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn>
                                 </template>
                             </v-tooltip>
+							</div>
+							<!-- </v-row> -->
                         </template>
                     <v-list>
                         <v-list-item>
