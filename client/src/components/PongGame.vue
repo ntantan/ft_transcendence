@@ -1,11 +1,13 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { gameStore } from "../stores/game"
+import { useGameStore } from "@/stores/game"
 
 export default defineComponent({
 
 	data() {
 		return {
+			gameStore: useGameStore(),
+
 			context: {},
 			width: 640,
 			height: 480,
@@ -21,17 +23,16 @@ export default defineComponent({
 			ball: undefined,
 			racket: undefined,
 			racket2: undefined,
-
-			gameStore,
 		};
 	},
 
 	created() {
 		var myFont = new FontFace("myFont", "url(src/assets/PressStart2P-Regular.ttf)");
-		myFont.load().then(function(font) {
+	 	myFont.load().then(function(font) {
 			document.fonts.add(font);
 			console.log("font loaded");
 		});
+
 
 		this.retro = new Image();
 		this.retro.src = 'src/assets/retro.png';
@@ -262,10 +263,10 @@ export default defineComponent({
 				</v-btn>
 			</v-btn-toggle>
 		</v-col>
-	</v-row> 
+	</v-row>
 </template>
 
-<style>
+<style scoped>
 
 .h1 {
 	justify-content: center;

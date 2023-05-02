@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
-import { gameStore } from "../stores/game";
+import { useGameStore } from "../stores/game";
 import HistoryDialog from "@/components/HistoryDialog.vue";
 import gamemod2 from "@/assets/screenshot_gamemod2.png";
 import gamemod1 from "@/assets/screenshot_gamemod1.png";
@@ -15,9 +15,9 @@ export default defineComponent({
 			gamemod1: gamemod1,
 			gamemod2: gamemod2,
 			rooms: [],
-			gameStore,
+			gameStore: useGameStore(),
 			model: 1,
-			opponentImage: gameStore.invitedUser.avatar,
+			
 		};
 	},
 
@@ -45,9 +45,9 @@ export default defineComponent({
 				this.gameStore.inGame = response.player_side;
 				if (this.gameStore.inGame)
 					this.gameStore.currentRoom = response.roomName;
-				console.log(response)
+					console.log(this.gameStore)
+					router.push('/game');
 			});
-			router.push('/game');
 		},
 
 		leaveRoom(roomName: string)
@@ -68,7 +68,9 @@ export default defineComponent({
 	},
 
 	computed: {
-			
+		// opponentImage() {
+		// 	gameStore.invitedUser.avatar
+		// }
 	},
 });
 </script>
@@ -144,7 +146,7 @@ export default defineComponent({
 			<v-card-title class="d-flex justify-center" >Your opponent</v-card-title>
 			<v-col class="d-flex justify-center">
 				<v-avatar size="100">
-					<v-img v-bind:src="opponentImage"></v-img>
+					<v-img v-bind:src="gameStore.invitedUser.avatar"></v-img>
 				</v-avatar>
 			</v-col>
 			<v-col cols="auto" class="d-flex justify-center">

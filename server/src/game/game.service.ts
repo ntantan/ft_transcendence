@@ -55,12 +55,14 @@ export class GameService {
 			{
 				room.player_1 = id;
 				client.join(room.name);
+				client.emit('reconnect', {player_side: '1', room: room.name})
 				return (room);
 			}
 			else if (room.p2_copy == id && room.player_2 == undefined)
 			{
 				room.player_2 = id;
 				client.join(room.name);
+				client.emit('reconnect', {player_side: '2', room: room.name})
 				return (room);
 			}
 		})
@@ -459,6 +461,22 @@ export class GameService {
 				this.endMatch(server, room);
 		}, 10);
 		this.schedulerRegistry.addInterval(id, IntervalId);
+	}
+
+	send_reconnect(server: Server, room: Room)
+	{
+		if (!room.player_1)
+		{
+			const find = this.player.find((player) => player.id == room.player_1)
+			if (find)
+				server.to(find.socket_id).emit('reconnect', {player_side: '1', room: room.name})
+		}
+		if (!room.player_2)
+		{
+			const find = this.player.find((player) => player.id == room.player_2)
+			if (find)
+				server.to(find.socket_id).emit('reconnect', {player_side: '2', room: room.name})
+		}
 	}
 
 	deleteInterval(id:string)

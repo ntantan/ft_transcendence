@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 import BannerBar from "./components/BannerBar.vue";
 import NavBar from "./components/NavBar.vue";
 
-import { gameStore } from "./stores/game";
+import { useGameStore } from "./stores/game";
 import { chatStore } from "./stores/chat";
 import router from "./router";
 
@@ -19,16 +19,16 @@ export default defineComponent({
 	},
 
 	watch: {
-		// $route(to) {
-		// 	document.title = `${to.meta.title}`;
-		// 	const link = document.querySelector("[rel='icon']");
-		// 	link.setAttribute('href',to.meta.icon);
-		// }
+		$route(to) {
+			document.title = `${to.meta.title}`;
+			const link = document.querySelector("[rel='icon']");
+			link.setAttribute('href',to.meta.icon);
+		}
 	},
 
 	data() {
 		return {
-			gameStore,
+			gameStore: useGameStore(),
 			chatStore,
 			// piniaGameStore: gameStore(),
 
@@ -46,7 +46,7 @@ export default defineComponent({
 
 	created() {
 		
-		const localhost = import.meta.env.VITE_LOCALHOST; // ${localhost}
+		// const localhost = import.meta.env.VITE_LOCALHOST; // ${localhost}
 		
 		this.gameStore.socket = io(`http://localhost:3000/game`, { withCredentials: true });
 		
@@ -90,9 +90,9 @@ export default defineComponent({
 				this.gameStore.inGame = response.player_side;
 				if (this.gameStore.inGame)
 					this.gameStore.currentRoom = response.roomName;
+				router.push('/game');
+				console.log(this.gameStore.currentRoom, this.gameStore.inGame)
 			});
-			router.push('/game');
-			console.log(this.gameStore.currentRoom, this.gameStore.inGame)
 		},
 	}
 });

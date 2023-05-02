@@ -4,11 +4,10 @@ import { io } from "socket.io-client";
 import axios from 'axios';
 
 import { chatStore } from "@/stores/chat";
-import { gameStore } from "@/stores/game";
+import { useGameStore } from "@/stores/game";
 import { userStore } from "@/stores/user";
 import { mergeProps } from "vue";
 import router from "@/router";
-import { mdiRhombusSplit } from "@mdi/js";
 
 const CHANNELS_URL = "http://localhost:3000/channels/";
 
@@ -16,7 +15,7 @@ export default defineComponent ({
     data() {
         return {
             chatStore,
-			gameStore,
+			gameStore: useGameStore(),
 			userStore,
             socket: {},
 			isJoined: false,
