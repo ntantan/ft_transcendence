@@ -74,6 +74,7 @@ export default defineComponent({
 </script>
 
 <template>
+	<div style="overflow-y: scroll; height: 65%;">
 	<v-container>
 		<h1 class="d-flex justify-center align-center">Match history</h1>
 		<v-card>
@@ -85,6 +86,7 @@ export default defineComponent({
 			</v-row>
 		</v-card>
 
+	<div>
 		<div 
 			v-for="(item, index) in this.history"
 			v-motion-fade
@@ -114,11 +116,19 @@ export default defineComponent({
 			</v-row>
 			</v-card>
 		</div>
+	</div>
 	</v-container>
+	</div>
 </template>
 
 <style scoped>
 
+.scroll{
+	height: 100%;
+	overflow-y: scroll;
+	scrollbar-color: rebeccapurple green;
+ 	scrollbar-width: thin;
+}
 .column {
 	display: flex;
 	justify-content: center;
