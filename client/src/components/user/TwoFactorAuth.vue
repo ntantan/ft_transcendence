@@ -30,11 +30,9 @@ export default defineComponent({
                 this.secret = "";
                 this.userQRCode = "";
                 this.isValid = false;
+                this.userStore.user.two_fa = false;
                 await this.updateTwoFa(false);
             }
-        },
-        isValid: function (newValue, oldValue) {
-            this.enable = userStore.user.two_fa;
         },
     },
     methods: {
