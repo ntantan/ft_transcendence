@@ -3,9 +3,16 @@ import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
 import { AuthService } from 'src/auth/auth.service';
 import { User } from 'src/users/entities/user.entity';
-import { Req } from '@nestjs/common';
+import { Req, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Player } from './objects/Player';
+import { joinQueueDTO } from './dto/join-queue.dto';
+import { createCustomDTO } from './dto/create-custom-dto';
+import { joinRoomDTO } from './dto/join-room.dto';
+import { leaveRoomDTO } from './dto/leave-room.dto';
+import { spectateRoomDTO } from './dto/spectate-room.dto';
+import { playerMoveDTO } from './dto/player-move.dto';
 
+@UsePipes(new ValidationPipe())
 @WebSocketGateway({namespace: '/game', cors:  {origin: ['http://localhost:5173'], credentials: true, cookie: true}})
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
 	
@@ -69,7 +76,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	@SubscribeMessage('joinQueue')
-	async joinQueue(@ConnectedSocket() client: Socket, @MessageBody() data: any)
+	async joinQueue(@ConnectedSocket() client: Socket, @MessageBody() data: joinQueueDTO)
 	{
 		const user = await this.get_ws_user(client);
 		if (!user)
@@ -83,7 +90,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	@SubscribeMessage('createCustom')
-	async createCustom(@ConnectedSocket() client: Socket, @MessageBody() data: any)
+	async createCustom(@ConnectedSocket() client: Socket, @MessageBody() data: createCustomDTO)
 	{
 		const user = await this.get_ws_user(client);
 		if (!user)
@@ -98,7 +105,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	@SubscribeMessage('joinRoom')
-	async joinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: any)
+	async joinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: joinRoomDTO)
 	{
 		const user = await this.get_ws_user(client);
 		if (!user)
@@ -117,7 +124,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	@SubscribeMessage('leaveRoom')
-	async leaveRoom(@ConnectedSocket() client: Socket, @MessageBody() data: any)
+	async leaveRoom(@ConnectedSocket() client: Socket, @MessageBody() data: leaveRoomDTO)
 	{
 		const user = await this.get_ws_user(client);
 		if (!user)
@@ -133,7 +140,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	@SubscribeMessage('spectateRoom')
-	async spectateRoom(@ConnectedSocket() client: Socket, @MessageBody() data: any )
+	async spectateRoom(@ConnectedSocket() client: Socket, @MessageBody() data: spectateRoomDTO)
 	{
 		const user = await this.get_ws_user(client);
 		if (!user)
@@ -149,7 +156,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	@SubscribeMessage('move')
-	async move(client: Socket, data: any)
+	async move(@ConnectedSocket() client: Socket, @MessageBody() data: playerMoveDTO)
 	{
 		const user = await this.get_ws_user(client);
 		if (!user)

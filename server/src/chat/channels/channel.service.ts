@@ -210,7 +210,7 @@ export class ChannelService
 		}
 	}
 
-	async createDirectChannel(user: User, other_user_id: number)
+	async createDirectChannel(user: User, other_user_id: Number)
 	{
 		const channels = await this.getDirectChannels(user);
 		for (const channel of channels)
@@ -220,7 +220,7 @@ export class ChannelService
 			throw new ForbiddenException('Channel already exists')
 		}
 		const newChannel = await this.createChannel(user.username, "", user, "direct");
-		this.addUser(String(newChannel.id), await this.usersService.findOne(other_user_id), "");
+		this.addUser(String(newChannel.id), await this.usersService.findOne(other_user_id.valueOf()), "");
 	}
 
 	async findChannelById(id: string)
@@ -239,7 +239,7 @@ export class ChannelService
 		throw new NotFoundException("Channel not found");
 	}
 
-	async findChannelUserByUser(channel: Channel, user_id: number)
+	async findChannelUserByUser(channel: Channel, user_id: Number)
 	{
 		const channel_user = channel.channel_users.find((channel_user) => channel_user.user.id === user_id);
 		if (channel_user)
@@ -283,7 +283,7 @@ export class ChannelService
 	}
 
 	// Add admin if true, remove admin if false
-	async addAdmin(requester: User, channel_id: string, user_id: number)
+	async addAdmin(requester: User, channel_id: string, user_id: Number)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user_id);
@@ -296,7 +296,7 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
-	async rmAdmin(requester: User, channel_id: string, user_id: number)
+	async rmAdmin(requester: User, channel_id: string, user_id: Number)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user_id);
@@ -309,7 +309,7 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
-	async addMuted(requester: User, channel_id: string, user_id: number, muted_time: number)
+	async addMuted(requester: User, channel_id: string, user_id: Number, muted_time: Number)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user_id);
@@ -321,12 +321,12 @@ export class ChannelService
 			throw new UnauthorizedException('You can not mute another admin');
 		
 		const until = new Date();
-		until.setMinutes(until.getMinutes() + muted_time);
+		until.setMinutes(until.getMinutes() + muted_time.valueOf());
 		channel_user.muted = until;
 		return (await this.channelRepository.save(channel));
 	}
 
-	async rmMuted(requester: User, channel_id: string, user_id: number)
+	async rmMuted(requester: User, channel_id: string, user_id: Number)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user_id);
@@ -341,7 +341,7 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
-	async addBanned(requester: User, channel_id: string, user_id: number)
+	async addBanned(requester: User, channel_id: string, user_id: Number)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user_id);
@@ -357,7 +357,7 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
-	async rmBanned(requester: User, channel_id: string, user_id: number)
+	async rmBanned(requester: User, channel_id: string, user_id: Number)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user_id);
@@ -437,7 +437,7 @@ export class ChannelService
 		return (await this.channelRepository.save(channel));
 	}
 
-	async kickUser(requester: User, channel_id: string, user_id: number)
+	async kickUser(requester: User, channel_id: string, user_id: Number)
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user_id);

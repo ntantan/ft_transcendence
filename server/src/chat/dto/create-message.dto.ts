@@ -1,10 +1,10 @@
 import { IsString, IsAlphanumeric, IsNumberString } from "class-validator";
 
-export class JoinRoomDTO 
+export class CreateMessageDTO 
 {
 	@IsNumberString()
 	readonly id: string;
 
 	@IsString()
-	readonly password: string;
+	readonly msg: string;
 }

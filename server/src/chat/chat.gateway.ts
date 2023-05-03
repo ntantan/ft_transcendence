@@ -4,8 +4,19 @@ import { ChatService } from "./chat.service";
 import { ChannelService } from "./channels/channel.service";
 import { CreateRoomDTO } from "./dto/create-room.dto";
 import { JoinRoomDTO } from "./dto/join-room.dto";
-import { Res, UnauthorizedException } from "@nestjs/common";
+import { Res, UnauthorizedException, ValidationPipe, UsePipes } from "@nestjs/common";
+import { CreateDirectRoomDTO } from "./dto/create-direct-room.dto";
+import { AddUserPrivateDTO } from "./dto/add-user-private.dto";
+import { JoinSocketDTO } from "./dto/join-socket.dto";
+import { LeaveRoomDTO } from "./dto/leave-room.dto";
+import { CreateMessageDTO } from "./dto/create-message.dto";
+import { KickUserDTO } from "./dto/kick-user.dto";
+import { BannedDTO } from "./dto/add-banned.dto";
+import { AdminDTO } from "./dto/admin.dto";
+import { MuteDTO } from "./dto/mute.dto";
+import { UpdatePasswordDTO } from "./dto/update-password.dto";
 
+@UsePipes()
 @WebSocketGateway({namespace: '/chat', cors: true})
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
@@ -28,6 +39,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		// console.log(client.id, " disconnect from chat socket")
 	}
 	
+
     @SubscribeMessage('createRoom')
     async createRoom(@MessageBody() body: CreateRoomDTO, @ConnectedSocket() client: Socket) 
     {
@@ -45,7 +57,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
 	@SubscribeMessage('createDirectRoom')
-	async createDirectRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async createDirectRoom(@MessageBody() body: CreateDirectRoomDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -77,7 +89,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
 	@SubscribeMessage('addUserPrivate')
-	async addUserPrivate(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async addUserPrivate(@MessageBody() body: AddUserPrivateDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -91,7 +103,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('joinSocket')
-	async joinSocket(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async joinSocket(@MessageBody() body: JoinSocketDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -103,7 +115,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('leaveRoom')
-	async leaveRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async leaveRoom(@MessageBody() body: LeaveRoomDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -120,7 +132,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('textMessage')
-	async handleMessage(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async handleMessage(@MessageBody() body: CreateMessageDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -136,7 +148,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('kickUser')
-	async kickUser(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async kickUser(@MessageBody() body: KickUserDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -152,7 +164,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('addBanned')
-	async addBanned(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async addBanned(@MessageBody() body: BannedDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -168,7 +180,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('rmBanned')
-	async rmBanned(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async rmBanned(@MessageBody() body: BannedDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -184,7 +196,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('addAdmin')
-	async addAdmin(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async addAdmin(@MessageBody() body: AdminDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -200,7 +212,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('rmAdmin')
-	async rmAdmin(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async rmAdmin(@MessageBody() body: AdminDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -216,7 +228,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('addMute')
-	async addMute(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async addMute(@MessageBody() body: MuteDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -232,7 +244,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('rmMute')
-	async rmMute(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async rmMute(@MessageBody() body: MuteDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -248,7 +260,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('blockUser')
-	async blockUser(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async blockUser(@ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)
@@ -263,7 +275,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('updatePassword')
-	async updatePassword(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	async updatePassword(@MessageBody() body: UpdatePasswordDTO, @ConnectedSocket() client: Socket)
 	{
 		const user = await this.chatService.get_ws_user(client);
 		if (!user)

@@ -1,10 +1,7 @@
 import { IsString, IsAlphanumeric, IsNumberString } from "class-validator";
 
-export class JoinRoomDTO 
+export class LeaveRoomDTO 
 {
 	@IsNumberString()
 	readonly id: string;
-
-	@IsString()
-	readonly password: string;
 }

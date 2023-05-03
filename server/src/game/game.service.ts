@@ -124,7 +124,7 @@ export class GameService {
 	//		QUEUE		//
 	private queue: string[]
 
-	joinQueue(client: Socket, server: Server, mod: number, user: User)
+	joinQueue(client: Socket, server: Server, mod: Number, user: User)
 	{
 		this.leaveAllRoom(client, server, String(user.id));
 
@@ -161,7 +161,7 @@ export class GameService {
 		return (newRoom);
 	}
 
-	createCustomRoom(client: Socket, server: Server, mod: number, user: User)
+	createCustomRoom(client: Socket, server: Server, mod: Number, user: User)
 	{
 		this.leaveAllRoom(client, server, user.username);
 
@@ -235,7 +235,7 @@ export class GameService {
 		}
 	}
 
-	createRoom(mod: number, type: string)
+	createRoom(mod: Number, type: string)
 	{
 		let roomName = type + Math.floor(Math.random() * 1000);	
 		while (this.rooms.find((room) => room.name === roomName))

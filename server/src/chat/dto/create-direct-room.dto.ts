@@ -1,7 +1,7 @@
-import { IsString, IsAlphanumeric } from "class-validator";
+import { IsString, IsAlphanumeric, IsNumber } from "class-validator";
 
 export class CreateDirectRoomDTO 
 {
-	@IsAlphanumeric()
-	readonly room_name: string;
+	@IsNumber()
+	readonly user_id: Number;
 }
