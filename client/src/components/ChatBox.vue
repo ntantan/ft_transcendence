@@ -28,6 +28,7 @@ export default defineComponent ({
 			private_channels: [],
 			public_channels: [],
             channels: [],
+			my_channel_user: {},
 
 			channel_types: ["public", "private", "direct"],
 			n_channel_types: 3,
@@ -42,6 +43,7 @@ export default defineComponent ({
 			pdv: '20px',
 			
 			roomPassword: "",
+			updatePassword: "",
 
 			snackbar: false,
 			snackbar_text: 'My timeout is set to 2000.',
@@ -201,6 +203,24 @@ export default defineComponent ({
 		leaveRoom() {
 			this.socket.emit('leaveRoom', {
 				id: this.selectedChannel,
+			})
+		},
+
+		setPassword() {
+			if (this.updatePassword)
+			{
+				this.socket.emit('updatePassword', {
+					id: this.selectedChannel,
+					password: this.updatePassword
+				})
+				this.updatePassword = "";			}
+		},
+
+
+		removePassword() {
+			this.socket.emit('updatePassword', {
+				id: this.selectedChannel,
+				password: ""
 			})
 		},
 
@@ -536,49 +556,8 @@ export default defineComponent ({
             </v-col>
 
             <v-col cols="3">
-                <v-card class="h-chat scroll">
+                <v-card class="h-75 scroll">
                     <h2 class="d-flex justify-center">User</h2>
-					
-                    <!-- <v-menu v-for="user in this.room.channel_users" :key="user">
-                        <template v-slot:activator="{ props: menu }">
-							<div class="d-flex justify-center mb-0 bg-surface-variant flex-column">
-                            <v-tooltip>
-                                <template v-slot:activator="{ props: tooltip }">
-                                    <v-btn :style="{ margin: pdv }" color="primary" v-bind="mergeProps(menu, tooltip)">{{ user.user.username }}</v-btn>
-                                </template>
-                            </v-tooltip>
-							</div>
-                        </template>
-                    <v-list>
-                        <v-list-item>
-                            <v-list-item-title>
-								<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
-								<v-btn v-if="user.muted" type="submit" block @click="this.unmuteUser(user)" color="primary">unmute</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item>
-                            <v-list-item-title>
-								<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item>
-                            <v-list-item-title>
-								<v-btn v-if="!user.admin" type="submit" block @click="this.addAdmin(user)" color="primary">admin</v-btn>
-								<v-btn v-if="user.admin" type="submit" block @click="this.rmAdmin(user)" color="primary">unadmin</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item>
-                            <v-list-item-title>
-								<v-btn type="submit" block @click="this.inviteGame(user)" color="primary">invite game</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-						<v-list-item>
-                            <v-list-item-title>
-								<v-btn type="submit" block @click="this.toProfile(user)" color="primary">Profile</v-btn>
-							</v-list-item-title>
-                        </v-list-item>
-                    </v-list>
-                    </v-menu> -->
 
 					<v-menu v-for="user in this.room.channel_users" :key="user">
 						<template v-slot:activator="{ props: menu }">
@@ -589,7 +568,6 @@ export default defineComponent ({
 							</v-tooltip>
 						</template>
 						
-						<!-- && user.user.id !== this.userStore.user.id"> -->
 						<v-list v-if="channel_types[selected_channel_type] !== 'direct' && user.user.id !==this.userStore.user.id">
 							<v-list-item>
 								<v-list-item-title>
@@ -645,8 +623,17 @@ export default defineComponent ({
 						<v-autocomplete v-model="this.select_private_id" :items="this.users" item-title="username" item-value="id" label="Select user"></v-autocomplete>
 						<v-btn type="submit" block @click="this.privateAddUser()">Add</v-btn>
 					</v-form>
-					</div>
+				</div>
                 </v-card>
+
+				<v-card class="h-25" v-if="isJoined && selectedRoomname">
+					<v-form @submit.prevent>
+						<v-text-field v-model="this.updatePassword" label="New password"></v-text-field>
+						<v-btn type="submit" block @click="this.setPassword()">Update password</v-btn>
+						<v-btn type="submit" block @click="this.removePassword()" class="mt-2">Remove password</v-btn>
+					</v-form>
+				</v-card>
+
             </v-col>
         </v-row>
     </v-card>

@@ -23,13 +23,6 @@ export default defineComponent({
 	},
 	
 	mounted() {
-		this.gameStore.socket.on('reconnect', (response) => {
-			console.log("RECON", response);
-			if (response.player_side)
-				this.gameStore.inGame = response.player_side;
-			if (response.currentRoom)
-				this.gameStore.currentRoom = response.room;
-		})
 	},
 
 	

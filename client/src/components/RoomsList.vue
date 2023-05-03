@@ -38,6 +38,14 @@ export default defineComponent({
 	mounted() {
 		this.getRooms();
 
+		this.gameStore.socket.on('reconnect', (response) => {
+			console.log("RECON", response);
+			if (response.player_side)
+				this.gameStore.inGame = response.player_side;
+			if (response.currentRoom)
+				this.gameStore.currentRoom = response.room;
+		})
+
 		this.gameStore.socket.on("endGame", (data) => {
 			const roomName = data.roomName;
 			this.gameStore.socket.emit("leaveRoom", { roomName });

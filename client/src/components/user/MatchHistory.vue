@@ -74,7 +74,7 @@ export default defineComponent({
 </script>
 
 <template>
-	<div style="overflow-y: scroll; height: 65%;">
+	<div style="overflow-y: scroll; height: 65%; min-height: 950px;">
 	<v-container>
 		<h1 class="d-flex justify-center align-center">Match history</h1>
 		<v-card>

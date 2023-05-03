@@ -458,8 +458,17 @@ export class ChannelService
 		const channel_user = await this.findChannelUserByUser(channel, requester.id);
 		
 		if (!channel_user.channel_owner)
-			throw new UnauthorizedException("Only channel can update password");
-		channel.password = new_password;
+			throw new UnauthorizedException("Only channel owner can update password");
+
+		if (new_password)
+		{
+			var saltRounds = 10;
+			await bcrypt.hash(new_password, saltRounds).then((hash) => {
+				channel.password = hash;
+			})
+		}
+		else
+			channel.password = "";
 		return (await this.channelRepository.save(channel));
 	}
 }
