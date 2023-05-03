@@ -38,11 +38,11 @@ export class ChannelService
 		const channel = await this.channelRepository.findOne({
 			where: [{
 				id: Number(id),
-				messages: {
-					user: {
-						id: Not(In(blockedUsersIds)),
-					}
-				}
+				// messages: {
+				// 	user: {
+				// 		id: Not(In(blockedUsersIds)),
+				// 	}
+				// }
 			}],
 			relations: {
 				channel_users: {
@@ -64,6 +64,9 @@ export class ChannelService
 		}
 		if (channel_user.banned)
 			throw new ForbiddenException('User was banned from this channel')
+		
+		if (blockedUsersIds)
+			channel.messages = channel.messages.filter(message => !blockedUsersIds.includes(message.user.id));
 
 		return (channel);
 	}
