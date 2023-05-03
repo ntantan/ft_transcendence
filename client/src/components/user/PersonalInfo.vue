@@ -60,19 +60,21 @@ export default defineComponent({
                 return;
             }
             this.nameEdit = false;
+            const actualName = this.userStore.user.username;
+            const newName = this.tmpName;
+            this.userStore.user.username = newName;
+            this.tmpName = "";
             await axios.patch("http://localhost:3000/users/" + this.userStore.user.id, {
-                username: this.tmpName
+                username: newName
             }, {
                 withCredentials: true
             }).then(response => {
-                //this.userStore.user.username = this.tmpName;
-                this.userStore.user.username = this.tmpName;
-                this.tmpName = "";
+                this.userStore.user.username = this.newName;
             }).catch((error) => {
                 if (error.response.status === 400) {
                     alert("Username already exists");
                 }
-                this.tmpName = "";
+                this.userStore.user.username = actualName;
             });
         },
 
@@ -95,7 +97,7 @@ export default defineComponent({
             <v-btn color="primary" @click="updateAvatar">Update avatar</v-btn>
             <input type="file" id="avatar" />
         </v-card-title>
-        <v-card v-if="!nameEdit" title="Username">
+        <v-card v-show="!nameEdit" title="Username">
             <template v-slot:subtitle>
                 {{ userStore.user.username }}
             </template>
@@ -103,7 +105,7 @@ export default defineComponent({
                 <v-btn variant="text" icon="mdi-chevron-left" @click.stop="nameEdit = !nameEdit">Edit</v-btn>
             </template>
         </v-card>
-        <v-card v-if="nameEdit">
+        <v-card v-show="nameEdit">
             <v-card-title>
                 Please type your new username
             </v-card-title>
