@@ -258,6 +258,20 @@ export default defineComponent ({
             console.log("kickUser OK");
         },
 
+		addBanned(channel_user: any) {
+			this.socket.emit('addBanned', {
+				id: this.selectedChannel,
+				user_id: channel_user.user.id
+			})
+		},
+
+		rmBanned(channel_user: any) {
+			this.socket.emit('rmBanned', {
+				id: this.selectedChannel,
+				user_id: channel_user.user.id
+			})
+		},
+
         addAdmin(channel_user: any) {
             this.socket.emit('addAdmin', {
 								id: this.selectedChannel,
@@ -593,6 +607,12 @@ export default defineComponent ({
 							<v-list-item>
 								<v-list-item-title>
 									<v-btn type="submit" block @click="this.kickUser(user)" color="primary">kick</v-btn>
+								</v-list-item-title>
+							</v-list-item>
+							<v-list-item>
+								<v-list-item-title>
+									<v-btn v-if="!user.banned" type="submit" block @click="this.addBanned(user)" color="black">ban</v-btn>
+									<v-btn v-if="user.banned" type="submit" block @click="this.rmBanned(user)" color="black">unban</v-btn>
 								</v-list-item-title>
 							</v-list-item>
 							<v-list-item>

@@ -151,6 +151,38 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		this.server.emit('updateRoom');
 	}
 
+	@SubscribeMessage('addBanned')
+	async addBanned(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	{
+		const user = await this.chatService.get_ws_user(client);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+
+		try { await this.channelService.addBanned(user, body.id, body.user_id)}
+		catch (error) { 
+			// console.log(error); 
+			client.emit('error', error);
+		}
+
+		this.server.emit('updateRoom');
+	}
+
+	@SubscribeMessage('rmBanned')
+	async rmBanned(@MessageBody() body: any, @ConnectedSocket() client: Socket)
+	{
+		const user = await this.chatService.get_ws_user(client);
+		if (!user)
+			throw new UnauthorizedException('Jwt verification failed');
+
+		try { await this.channelService.rmBanned(user, body.id, body.user_id)}
+		catch (error) { 
+			// console.log(error); 
+			client.emit('error', error);
+		}
+
+		this.server.emit('updateRoom');
+	}
+
 	@SubscribeMessage('addAdmin')
 	async addAdmin(@MessageBody() body: any, @ConnectedSocket() client: Socket)
 	{

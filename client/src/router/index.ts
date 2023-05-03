@@ -86,7 +86,7 @@ router.beforeEach(async (to, from) => {
 		.then((response) => {
 			userStore.authenticated = true;
 			userStore.user = response.data;
-			if ((response.data.two_fa && !response.data.two_fa_enabled) && to.name !== 'user') {
+			if ((response.data.two_fa && !response.data.two_fa_logged) && to.name !== 'user') {
 				return ({ name: "login" })
 			}
 		})

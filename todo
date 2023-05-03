@@ -1,9 +1,12 @@
 à faire:
-- Ban user
+✅ Ban user
 - impossible de voir un channel si il comporte seulement des messages de user qui ont ete bloques par le user a cause de la regle dans getChannel
+- route guard for 2fa
 - reload mieux apres login 
 - more stats
 
 
 flemme:
 - Pouvoir acceder depuis un autre pc ?
+
+🕵

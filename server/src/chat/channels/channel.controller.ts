@@ -27,7 +27,6 @@ export class ChannelController
 		return (this.channelService.getAllChannel());
 	}
 
-
 	@Get('/public')
 	async getPublicChannels(@Req() req: Request)
 	{

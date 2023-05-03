@@ -377,11 +377,13 @@ export class ChannelService
 				.where("channel.id = :id", {id: channel_id})
 				.addSelect("channel.password")
 				.getOne()
+		if (!password && ch_pass.password)
+			throw new UnauthorizedException("This channel requires a password")
 		if (ch_pass.password)
 		{
 			await bcrypt.compare(password, ch_pass.password).then((result) => {
 				if (result == false)
-					throw new UnauthorizedException("Wrong Password");
+					throw new UnauthorizedException("Wrong password");
 			})
 		}
 
