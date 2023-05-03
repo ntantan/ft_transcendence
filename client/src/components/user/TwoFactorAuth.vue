@@ -29,8 +29,12 @@ export default defineComponent({
             else {
                 this.secret = "";
                 this.userQRCode = "";
+                this.isValid = false;
                 await this.updateTwoFa(false);
             }
+        },
+        isValid: function (newValue, oldValue) {
+            this.enable = userStore.user.two_fa;
         },
     },
     methods: {
@@ -84,13 +88,14 @@ export default defineComponent({
             this.dialog = false;
             this.userQRCode = "";
             console.log("verified");
+            this.userStore.user.two_fa = true;
             await this.updateTwoFa(true);
         },
         cancelEnable() {
             this.dialog = false;
             this.userQRCode = "";
             this.enable = false;
-        }
+        },
     },
 });
 </script>
@@ -132,11 +137,11 @@ export default defineComponent({
                         </v-row>
                     </v-card>
                 </div>
-                <div v-if="userStore.user.two_fa">
+                <div v-show="userStore.user.two_fa">
                     <v-alert type="success" title="Two Factor Authentication is enabled."
                         text="You will be asked to enter a code from your authenticator app when you login."></v-alert>
                 </div>
-                <div v-if="!userStore.user.two_fa && !userQRCode">
+                <div v-show="!userStore.user.two_fa && !userQRCode">
                     <v-alert type="warning" title="Two Factor Authentication is not enabled."
                         text="You will not be asked to enter a code from your authenticator app when you login."></v-alert>
                 </div>
