@@ -39,7 +39,7 @@ export default defineComponent({
 		this.getRooms();
 
 		this.gameStore.socket.on('reconnect', (response) => {
-			console.log("RECON", response);
+			// console.log("RECON", response);
 			if (response.player_side)
 				this.gameStore.inGame = response.player_side;
 			if (response.currentRoom)
@@ -71,7 +71,7 @@ export default defineComponent({
 		{
 			this.gameStore.socket.emit("joinQueue", { mod: this.model },(response) => {
 				this.gameStore.inGame = response.player_side;
-				console.log(this.gameStore.inGame)
+				// console.log(this.gameStore.inGame)
 				localStorage.setItem("inGame", this.gameStore.inGame);
 				if (this.gameStore.inGame)
 				{

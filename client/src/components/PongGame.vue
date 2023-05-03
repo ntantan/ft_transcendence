@@ -27,12 +27,13 @@ export default defineComponent({
 	},
 
 	created() {
+
+		window.addEventListener('wheel', this.handleWheel);
+
 		var myFont = new FontFace("myFont", "url(src/assets/PressStart2P-Regular.ttf)");
 	 	myFont.load().then(function(font) {
 			document.fonts.add(font);
-			console.log("font loaded");
 		});
-
 
 		this.retro = new Image();
 		this.retro.src = 'src/assets/retro.png';
@@ -49,6 +50,8 @@ export default defineComponent({
 
 	mounted() {
 		this.context = this.$refs.game.getContext("2d");
+
+
 
 		this.$nextTick(() => {
 			window.addEventListener("resize", this.resize_canvas);
@@ -163,6 +166,10 @@ export default defineComponent({
 		});
 	},
 
+	beforeUnmount() {
+		window.removeEventListener('wheel', this.handleWheel);
+	},
+
 	methods: {
 
 		setCanvasBackgroundColor()
@@ -223,6 +230,15 @@ export default defineComponent({
 			// }
 		},
 
+		handleWheel(event) {
+			if (event.deltaY > 0)
+				this.gameStore.socket.emit("move", { direction: "down", 
+													roomName: this.gameStore.currentRoom })
+			else if (event.deltaY < 0)
+				this.gameStore.socket.emit("move", { direction: "up", 
+														roomName: this.gameStore.currentRoom })
+			},
+
 		test() {
 			this.gameStore.socket.emit('test');
 		},
@@ -241,11 +257,10 @@ export default defineComponent({
 	</v-row> 
 
 	<!-- html css method to center element in a flexbox -->
-	<div class="container">
+	<div class="container" v-on:wheel="handleWheel">
 		<canvas class="game" ref="game" v-bind:width="width" v-bind:height="height"></canvas>
 		<input  class="keyinput" @keydown.down="move('down')" readOnly="true" @keydown.up="move('up')"/>
 	</div>
-
 
 	<v-row wrap>
         <v-col class="d-flex justify-center">

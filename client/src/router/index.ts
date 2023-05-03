@@ -86,8 +86,8 @@ router.beforeEach(async (to, from) => {
 		.then((response) => {
 			userStore.authenticated = true;
 			userStore.user = response.data;
-			console.log(response)
-			console.log(to.name)
+			// console.log(response)
+			// console.log(to.name)
 			if (response.data.two_fa && !response.data.two_fa_logged && to.name !== 'login') {
 				userStore.authenticated = false;
 			}
