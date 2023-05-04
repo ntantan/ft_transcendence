@@ -12,7 +12,7 @@ import { leaveRoomDTO } from './dto/leave-room.dto';
 import { spectateRoomDTO } from './dto/spectate-room.dto';
 import { playerMoveDTO } from './dto/player-move.dto';
 
-@UsePipes(new ValidationPipe())
+@UsePipes()
 @WebSocketGateway({namespace: '/game', cors:  {origin: ['http://localhost:5173'], credentials: true, cookie: true}})
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
 	

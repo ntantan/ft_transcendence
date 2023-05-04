@@ -510,7 +510,7 @@ export default defineComponent ({
 						<v-col cols="4">
 						</v-col>
 
-						<v-col v-if="this.channel_types[this.selected_channel_type] !== 'direct'" align-self="center">
+						<v-col v-if="this.room.type !== 'direct' && this.isJoined" align-self="center">
 							<v-btn width="100" color="primary" @click="leaveRoom()">Leave</v-btn>
 						</v-col>
 					</v-row>
@@ -568,7 +568,7 @@ export default defineComponent ({
 							</v-tooltip>
 						</template>
 						
-						<v-list v-if="channel_types[selected_channel_type] !== 'direct' && user.user.id !==this.userStore.user.id">
+						<v-list v-if="this.room.type !== 'direct' && user.user.id !==this.userStore.user.id">
 							<v-list-item>
 								<v-list-item-title>
 									<v-btn v-if="!user.muted" type="submit" block @click="this.muteUser(user)" color="primary">mute</v-btn>
@@ -626,7 +626,7 @@ export default defineComponent ({
 				</div>
                 </v-card>
 
-				<v-card class="h-25" v-if="isJoined && selectedRoomname">
+				<v-card class="h-25" v-if="isJoined && selectedRoomname && this.room.type != 'direct'">
 					<v-form @submit.prevent>
 						<v-text-field v-model="this.updatePassword" label="New password"></v-text-field>
 						<v-btn type="submit" block @click="this.setPassword()">Update password</v-btn>
