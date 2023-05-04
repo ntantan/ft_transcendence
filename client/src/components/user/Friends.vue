@@ -165,7 +165,7 @@ export default defineComponent({
                         single-line variant="underlined" @click:append-inner="searchUser"
                         @keydown.enter.prevent="searchUser" :rules="rules"></v-text-field>
                 </v-form>
-                <v-card v-if="foundUsers" flat="true">
+                <v-card v-if="foundUsers" elevation="0">
                     <v-row dense>
                         <v-col cols="12" v-for="foundUser in foundUsers">
                             <v-card>

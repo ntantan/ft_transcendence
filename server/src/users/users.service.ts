@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException, StreamableFile, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, StreamableFile, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { Friend } from './entities/friend.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,12 +7,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { Event } from '../events/entities/event.entity';
-import { ConfigService } from '@nestjs/config';
 import { Status } from './enum/status.enum';
 import { createReadStream } from 'fs';
 import { join } from 'path';
-import { CreateFriendDto } from './dto/create-friend.dto';
 import { Blocked } from './entities/blocked.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 
 @Injectable()
@@ -25,6 +24,7 @@ export class UsersService {
         @InjectRepository(Blocked)
         private readonly blockedRepository: Repository<Blocked>,
         private readonly connection: DataSource,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     findAll(paginationQuery: PaginationQueryDto) {
@@ -279,6 +279,8 @@ export class UsersService {
                 friends: [],
                 blocked: [],
             };
+            // emit event to prompt user to set up username/avatar
+            //this.eventEmitter.emit('userCreated', { message: 'User created', user: createUserDto });
             return this.create(createUserDto);
         }
         return user;

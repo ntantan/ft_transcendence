@@ -112,7 +112,7 @@ export default defineComponent({
             </v-row>
             <v-row>
                 <div v-if="userQRCode && !userStore.user.two_fa">
-                    <v-card flat="true">
+                    <v-card elevation="0">
                         <v-row>
                             <v-col>
                                 <v-card-title>Scan this QR code with your authenticator app.</v-card-title>

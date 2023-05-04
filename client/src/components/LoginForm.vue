@@ -1,21 +1,31 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { userStore } from '@/stores/user';
-import axios from "axios";
+import io from 'socket.io-client';
 import TwoFactorAuthInput from './user/TwoFactorAuthInput.vue';
 
 const localhost = import.meta.env.VITE_LOCALHOST;
 const login_url = `http://localhost:3000/auth/login`;
+const socket = io("http://localhost:3000");
 
 export default defineComponent({
 
 	components: {
 		TwoFactorAuthInput,
 	},
+
 	data() {
 		return {
 			userStore,
 		};
+	},
+
+	mounted() {
+		socket.on("userCreated", (data) => {
+			// prompt user to set up username and avatar
+			console.log("Received emitted event: ", data);
+			alert("Please set up your username and avatar");
+		});
 	},
 
 	computed: {
@@ -52,15 +62,6 @@ export default defineComponent({
 				},
 				body: JSON.stringify({ status: "Offline", two_fa_logged: false }),
 			});
-			// const response = await axios.patch("http://localhost:3000/users/" + this.userStore.user.id, { status: "Offline" }, { withCredentials: true })
-			// 	.then((response) => {
-			// 		userStore.user.two_fa_logged = false;
-			// 		userStore.user = response.data;
-			// 		console.log("wha?");
-			// 	})
-			// 	.catch((error) => {
-			// 		console.error(error.response);
-			// 	});
 			const data = await res.json();
 			if (data.error) {
 				console.log(data.error);
