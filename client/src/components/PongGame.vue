@@ -50,7 +50,6 @@ export default defineComponent({
 		this.context = this.$refs.game.getContext("2d");
 
 		window.addEventListener('wheel', this.handleWheel);
-		console.log('add event')
 
 		this.$nextTick(() => {
 			window.addEventListener("resize", this.resize_canvas);
@@ -230,7 +229,6 @@ export default defineComponent({
 		},
 
 		handleWheel(event) {
-			console.log(this.gameStore.currentRoom)
 			if (event.deltaY > 0)
 				this.gameStore.socket.emit("move", { direction: "down", 
 													roomName: this.gameStore.currentRoom })
