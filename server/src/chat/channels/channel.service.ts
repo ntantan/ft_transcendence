@@ -1,4 +1,4 @@
-import { ForbiddenException, GoneException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, GoneException, HttpException, HttpStatus, Injectable, PayloadTooLargeException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Channel } from "./entities/channel.entity";
 import { ArrayContainedBy, ArrayContains, FindOperator, In, Not, Repository } from "typeorm";
@@ -137,6 +137,10 @@ export class ChannelService
 	// Create one room
 	async createChannel(name: string, password: string, owner: User, type: string)
 	{
+		if (name.length > 50)
+			throw new PayloadTooLargeException('Romm name too long (50 characters max)');
+		if (password.length > 50)
+			throw new PayloadTooLargeException('Password too long (50 characters max)');
 
 		if (password)
 		{
@@ -252,7 +256,10 @@ export class ChannelService
 	{
 		const channel = await this.findChannelById(channel_id);
 		const channel_user = await this.findChannelUserByUser(channel, user.id);
-		await this.isMuted(channel_user)
+		await this.isMuted(channel_user);
+
+		if (message.length > 500)
+			throw new PayloadTooLargeException('Message too long (500 characters max)');
 
 		const newMessage = this.messageRepository.create({
 			message: message,
@@ -372,6 +379,9 @@ export class ChannelService
 
 	async addUser(channel_id: string, user: User, password: string)
 	{
+		if (password.length > 50)
+			throw new PayloadTooLargeException('Password too long (50 characters max)');
+
 		const channel = await this.findChannelById(channel_id);
 		// const user = await this.usersService.findOne(user_id);
 
