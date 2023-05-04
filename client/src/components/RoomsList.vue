@@ -40,17 +40,15 @@ export default defineComponent({
 
 		this.gameStore.socket.on('reconnect', (response) => {
 			// console.log("RECON", response);
-			if (response.player_side)
-				this.gameStore.inGame = response.player_side;
-			if (response.currentRoom)
-				this.gameStore.currentRoom = response.room;
+			this.gameStore.inGame = response.player_side;
+			this.gameStore.currentRoom = response.room;
 		})
 
 		this.gameStore.socket.on("endGame", (data) => {
 			const roomName = data.roomName;
 			this.gameStore.socket.emit("leaveRoom", { roomName });
 			this.gameStore.inGame = 0;
-			localStorage.setItem("inGame", this.gameStore.inGame);
+			// localStorage.setItem("inGame", this.gameStore.inGame);
 			this.getRooms();
 		});
 		
@@ -72,11 +70,11 @@ export default defineComponent({
 			this.gameStore.socket.emit("joinQueue", { mod: this.model },(response) => {
 				this.gameStore.inGame = response.player_side;
 				// console.log(this.gameStore.inGame)
-				localStorage.setItem("inGame", this.gameStore.inGame);
+				// localStorage.setItem("inGame", this.gameStore.inGame);
 				if (this.gameStore.inGame)
 				{
 					this.gameStore.currentRoom = response.roomName;
-					localStorage.setItem("currentRoom", this.gameStore.currentRoom);
+					// localStorage.setItem("currentRoom", this.gameStore.currentRoom);
 				}
 			});
 		},
@@ -85,18 +83,18 @@ export default defineComponent({
 		{
 			this.gameStore.socket.emit("leaveRoom", { roomName });
 			this.gameStore.currentRoom = null;
-			localStorage.setItem("currentRoom", this.gameStore.currentRoom);
+			// localStorage.setItem("currentRoom", this.gameStore.currentRoom);
 			this.gameStore.inGame = 0;
-			localStorage.setItem("inGame", this.gameStore.inGame);
+			// localStorage.setItem("inGame", this.gameStore.inGame);
 		},
 
 		spectateRoom(roomName: string)
 		{
 			this.gameStore.socket.emit("spectateRoom", { roomName });
 			this.gameStore.currentRoom = roomName;
-			localStorage.setItem("currentRoom", this.gameStore.currentRoom);
+			// localStorage.setItem("currentRoom", this.gameStore.currentRoom);
 			this.gameStore.inGame = 3;
-			localStorage.setItem("inGame", this.gameStore.inGame);
+			// localStorage.setItem("inGame", this.gameStore.inGame);
 		},
 	} 
 });
