@@ -1,17 +1,16 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query, UseGuards, UseInterceptors, UploadedFile, StreamableFile, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, UseInterceptors, UploadedFile, StreamableFile, ParseFilePipe, FileTypeValidator, MaxFileSizeValidator } from '@nestjs/common';
 import { Res } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
-import { LocalAuthGuard } from 'src/auth/local-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express, Response } from 'express';
 import 'multer';
 import * as fs from 'fs';
-import { createReadStream } from 'fs';
-import { join } from 'path';
 import { User } from './entities/user.entity';
+import { FileIsDefinedValidator } from './validator/FileIsDefinedValidator';
+
 
 @Controller('users')
 export class UsersController {
@@ -43,7 +42,16 @@ export class UsersController {
 
     @Post('/avatar/:id')
     @UseInterceptors(FileInterceptor('avatar'))
-    async updateAvatar(@UploadedFile() file: Express.Multer.File, @Param('id') id: number) {
+    async updateAvatar(@UploadedFile(
+        new ParseFilePipe({
+            validators: [
+                new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+                new MaxFileSizeValidator({ maxSize: 100000 }), // 100000 bytes = 100 kilobytes = 1 megabyte
+                new FileIsDefinedValidator(),
+            ],
+            fileIsRequired: true,
+        })
+    ) file: Express.Multer.File, @Param('id') id: number) {
         await fs.writeFileSync(process.cwd() + "/public/" + file.originalname, file.buffer);
         return await this.usersService.updateAvatar(file.originalname, id);
     }

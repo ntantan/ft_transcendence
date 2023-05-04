@@ -1,5 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
-import { isNumberObject } from 'util/types';
+import { IsString, IsNotEmpty, Length, Matches } from 'class-validator';
 import { Status } from '../enum/status.enum';
 import { Friend } from '../entities/friend.entity';
 import { Blocked } from '../entities/blocked.entity';
@@ -11,6 +10,8 @@ export class CreateUserDto {
 
     @IsNotEmpty()
     @IsString()
+    @Length(3, 20)
+    @Matches(/^[a-zA-Z0-9]+$/, { message: "Only letters, numbers and underscores allowed" })
     readonly username: string;
 
     @IsNotEmpty()
