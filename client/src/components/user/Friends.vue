@@ -154,61 +154,50 @@ export default defineComponent({
 </script>
 
 <template>
-    <v-card>
-        <v-card-title>
-            <h2>Friends</h2>
-        </v-card-title>
-        <v-container>
-            <v-col cols="6">
-                <v-form>
-                    <v-text-field label="Search user with username" v-model="search" append-inner-icon="mdi-magnify"
-                        single-line variant="underlined" @click:append-inner="searchUser"
-                        @keydown.enter.prevent="searchUser" :rules="rules"></v-text-field>
-                </v-form>
-                <v-card v-if="foundUsers" elevation="0">
-                    <v-row dense>
-                        <v-col cols="12" v-for="foundUser in foundUsers">
-                            <v-card>
-                                <div class="d-flex flex-no-wrap justify-space-between">
-                                <span class="userSpan">
-                                <v-avatar start>
-                                    <v-img :src="getAvatar(foundUser.avatar)"></v-img>
-                                </v-avatar>
-                                {{ foundUser.username }}</span>
-                                <span class="userSpan">
-                                <v-btn v-if="isBlocked(foundUser.id)" variant="text" size="small" title="Unblock user"
-                                        icon="mdi-lock-open-check-outline" @click="unblockUser(foundUser.id)"></v-btn>
-                                <v-btn v-else size="small" variant="text" title="Add to friend" icon="mdi-account-plus"
-                                        @click="addFriend(foundUser.id)"></v-btn>
-                                <v-btn :href="`/user/${foundUser.id}`" variant="text" size="small" title="See stats"
-                                        icon="mdi-scoreboard"></v-btn>
-                                <v-btn variant="text" size="small" title="Block user" icon="mdi-cancel"
-                                        @click="block(foundUser.id)"></v-btn>
-                                </span>
-                            </div>
-                            </v-card>
-                            <!-- <v-card color="#B0E0E6" class="mx-auto" >                             
-                                <v-card-title class="text">
-                                    {{ foundUser.username }}
-                                </v-card-title>
-                                <v-avatar size="50">
-                                    <v-img :src="getAvatar(foundUser.avatar)"></v-img>
-                                </v-avatar>
-                                <v-card-actions>
-                                    <v-btn v-if="isBlocked(foundUser.id)" size="small" title="Unblock user"
-                                        icon="mdi-lock-open-check-outline" @click="unblockUser(foundUser.id)"></v-btn>
-                                    <v-btn v-else size="small" variant="text" title="Add to friend" icon="mdi-account-plus"
-                                        @click="addFriend(foundUser.id)"></v-btn>
-                                    <v-btn :href="`/user/${foundUser.id}`" size="small" title="See stats"
-                                        icon="mdi-scoreboard"></v-btn>
-                                    <v-btn size="small" title="Block user" icon="mdi-cancel"
-                                        @click="block(foundUser.id)"></v-btn>
-                                </v-card-actions>
-                            </v-card> -->
-                        </v-col>
-                    </v-row>
-                </v-card>
+    <v-card elevation="0">
+        <v-row justify="center">
+            <v-col cols="auto">
+                <v-card-title>
+                    <h2>Friends</h2>
+                </v-card-title>
             </v-col>
+        </v-row>
+        <v-container>
+            <v-row justify="center">
+                <v-col cols="6">
+                    <v-form>
+                        <v-text-field label="Search user with username" v-model="search" append-inner-icon="mdi-magnify"
+                            single-line variant="underlined" @click:append-inner="searchUser"
+                            @keydown.enter.prevent="searchUser" :rules="rules"></v-text-field>
+                    </v-form>
+                    <v-card v-if="foundUsers" elevation="0">
+                        <v-row dense>
+                            <v-col cols="12" v-for="foundUser in foundUsers">
+                                <v-card>
+                                    <div class="d-flex flex-no-wrap justify-space-between">
+                                        <span class="userSpan">
+                                            <v-avatar start>
+                                                <v-img :src="getAvatar(foundUser.avatar)"></v-img>
+                                            </v-avatar>
+                                            {{ foundUser.username }}</span>
+                                        <span class="userSpan">
+                                            <v-btn v-if="isBlocked(foundUser.id)" variant="text" size="small"
+                                                title="Unblock user" icon="mdi-lock-open-check-outline"
+                                                @click="unblockUser(foundUser.id)"></v-btn>
+                                            <v-btn v-else size="small" variant="text" title="Add to friend"
+                                                icon="mdi-account-plus" @click="addFriend(foundUser.id)"></v-btn>
+                                            <v-btn :href="`/user/${foundUser.id}`" variant="text" size="small"
+                                                title="See stats" icon="mdi-scoreboard"></v-btn>
+                                            <v-btn variant="text" size="small" title="Block user" icon="mdi-cancel"
+                                                @click="block(foundUser.id)"></v-btn>
+                                        </span>
+                                    </div>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </v-card>
+                </v-col>
+            </v-row>
         </v-container>
         <v-container fluid v-show="friends">
             <v-row dense>

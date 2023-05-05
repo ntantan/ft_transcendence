@@ -101,9 +101,11 @@ export default defineComponent({
 <template>
     <v-card height="600" elevation="0">
         <v-row justify="center">
-            <v-card-title>
-                <h2>Two Factor Authentication</h2>
-            </v-card-title>
+            <v-col cols="auto">
+                <v-card-title>
+                    <h2>Two Factor Authentication</h2>
+                </v-card-title>
+            </v-col>
         </v-row>
         <v-container>
             <v-row justify="center">
