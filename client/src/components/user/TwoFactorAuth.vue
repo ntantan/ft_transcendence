@@ -99,51 +99,58 @@ export default defineComponent({
 </script>
 
 <template>
-    <v-card height="600">
-        <v-card-title>
-            <h2>Two Factor Authentication</h2>
-        </v-card-title>
+    <v-card height="600" elevation="0">
+        <v-row justify="center">
+            <v-card-title>
+                <h2>Two Factor Authentication</h2>
+            </v-card-title>
+        </v-row>
         <v-container>
-            <v-row>
-                <v-col>
+            <v-row justify="center">
+                <v-col cols="auto">
                     <v-switch v-model="enable" color="indigo" inset>{{ enable ? "Disable" : "Enable" }} Two-Factor
                         Authentication </v-switch>
                 </v-col>
             </v-row>
-            <v-row>
-                <div v-if="userQRCode && !userStore.user.two_fa">
-                    <v-card elevation="0">
-                        <v-row>
-                            <v-col>
-                                <v-card-title>Scan this QR code with your authenticator app.</v-card-title>
-                                <v-card-subtitle>(Ex. Google Authenticator, Authy etc.)</v-card-subtitle>
-                                <v-avatar size="200" rounded="0"><v-img :src="userQRCode" alt="QR Code"></v-img></v-avatar>
-                            </v-col>
-                            <v-col align-self="center">
-                                <div class="text-center">
-                                    <v-dialog v-model="dialog" width="auto">
-                                        <template v-slot:activator="{ props }">
-                                            <v-btn color="indigo" v-bind="props">
-                                                Next
-                                            </v-btn>
-                                        </template>
-                                        <component is="TwoFactorAuthInput" @cancel="cancelEnable" @verified="updateData">
-                                        </component>
-                                    </v-dialog>
-                                </div>
-                            </v-col>
+
+            <div v-if="userQRCode && !userStore.user.two_fa">
+                <v-card elevation="0">
+                    <v-col cols="auto">
+                        <v-row justify="center">
+                            <v-card-title>Scan this QR code with your authenticator app.</v-card-title>
                         </v-row>
-                    </v-card>
-                </div>
-                <div v-show="userStore.user.two_fa">
-                    <v-alert type="success" title="Two Factor Authentication is enabled."
-                        text="You will be asked to enter a code from your authenticator app when you login."></v-alert>
-                </div>
-                <div v-show="!userStore.user.two_fa && !userQRCode">
-                    <v-alert type="warning" title="Two Factor Authentication is not enabled."
-                        text="You will not be asked to enter a code from your authenticator app when you login."></v-alert>
-                </div>
-            </v-row>
+                        <v-row justify="center">
+                            <v-card-subtitle>(Ex. Google Authenticator, Authy etc.)</v-card-subtitle>
+                        </v-row>
+                        <v-row justify="center">
+                            <v-avatar size="200" rounded="0"><v-img :src="userQRCode" alt="QR Code"></v-img></v-avatar>
+                        </v-row>
+                    </v-col>
+                    <v-row justify="center">
+                        <v-col align-self="center">
+                            <div class="text-center">
+                                <v-dialog v-model="dialog" width="auto">
+                                    <template v-slot:activator="{ props }">
+                                        <v-btn color="indigo" v-bind="props">
+                                            Next
+                                        </v-btn>
+                                    </template>
+                                    <component is="TwoFactorAuthInput" @cancel="cancelEnable" @verified="updateData">
+                                    </component>
+                                </v-dialog>
+                            </div>
+                        </v-col>
+                    </v-row>
+                </v-card>
+            </div>
+            <div v-show="userStore.user.two_fa">
+                <v-alert type="success" title="Two Factor Authentication is enabled."
+                    text="You will be asked to enter a code from your authenticator app when you login."></v-alert>
+            </div>
+            <div v-show="!userStore.user.two_fa && !userQRCode">
+                <v-alert type="warning" title="Two Factor Authentication is not enabled."
+                    text="You will not be asked to enter a code from your authenticator app when you login."></v-alert>
+            </div>
         </v-container>
     </v-card>
 </template>

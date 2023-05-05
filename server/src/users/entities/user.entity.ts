@@ -60,5 +60,8 @@ export class User {
         }
     )
     blocked: Blocked[];
+    
+    @Column({ default: true })
+    firstLogin: boolean;
 
 }

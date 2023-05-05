@@ -24,6 +24,7 @@ export class ChatService {
 		two_fa_logged: false,
 		friends: null,
 		blocked: [],
+		firstLogin: false,
 	};
 
 	constructor(

@@ -11,7 +11,6 @@ import { Status } from './enum/status.enum';
 import { createReadStream } from 'fs';
 import { join } from 'path';
 import { Blocked } from './entities/blocked.entity';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 
 @Injectable()
@@ -24,7 +23,6 @@ export class UsersService {
         @InjectRepository(Blocked)
         private readonly blockedRepository: Repository<Blocked>,
         private readonly connection: DataSource,
-        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     findAll(paginationQuery: PaginationQueryDto) {
@@ -136,7 +134,7 @@ export class UsersService {
         user.blocked.push(blocked);
         return await this.userRepository.save(user);
     }
-    
+
     async unblockUser(id: number, friendId: number): Promise<User> {
         const user = await this.findOne(id);
         const blockedToDelete = await this.findOne(friendId);
@@ -278,15 +276,14 @@ export class UsersService {
                 two_fa_logged: false,
                 friends: [],
                 blocked: [],
+                firstLogin: true,
             };
-            // emit event to prompt user to set up username/avatar
-            //this.eventEmitter.emit('userCreated', { message: 'User created', user: createUserDto });
-            return this.create(createUserDto);
+            return await this.create(createUserDto);
         }
         return user;
     }
 
-    async getBlockedUsers(user: User) : Promise<User[]> {
+    async getBlockedUsers(user: User): Promise<User[]> {
         if (user.blocked === undefined) {
             return [];
         }

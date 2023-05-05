@@ -49,4 +49,7 @@ export class CreateUserDto {
 
     @IsNotEmpty()
     readonly blocked: Blocked[];
+    
+    @IsNotEmpty()
+    readonly firstLogin: boolean;
 }

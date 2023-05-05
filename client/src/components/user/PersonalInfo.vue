@@ -19,6 +19,7 @@ export default defineComponent({
                 (v: string) => /^[a-zA-Z0-9_]*$/.test(v) || "Only letters, numbers and underscores allowed",
                 //https://regexr.com/
             ],
+            uploaded: null,
         };
     },
 
@@ -41,7 +42,8 @@ export default defineComponent({
                 return;
             }
             if (data.avatar)
-                this.userStore.updateAvatar(data.avatar);
+                userStore.updateAvatar(data.avatar);
+            this.uploaded = null;
         },
 
         getAvatar(): string {
@@ -88,40 +90,64 @@ export default defineComponent({
 </script>
 
 <template>
-    <v-card>
-        <v-card-title>
-            <v-avatar size="150" rounded="0">
-                <img :src="getAvatar()" class="avatar" />
-            </v-avatar>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" @click="updateAvatar">Update avatar</v-btn>
-            <input type="file" id="avatar" />
-        </v-card-title>
-        <v-card v-show="!nameEdit" title="Username">
-            <template v-slot:subtitle>
-                {{ userStore.user.username }}
-            </template>
-            <template v-slot:append>
-                <v-btn variant="text" icon="mdi-chevron-left" @click.stop="nameEdit = !nameEdit">Edit</v-btn>
-            </template>
-        </v-card>
-        <v-card v-show="nameEdit">
-            <v-card-title>
-                Please type your new username
-            </v-card-title>
-            <v-card-text>
-                <v-form @submit.prevent="changeUsername">
-                    <v-text-field label="New username" v-model="tmpName" :rules="rules"
-                        @keydown.enter.prevent="changeUsername"></v-text-field>
-                    <v-btn color="primary" type="submit">Save</v-btn>
-                    <v-btn color="warning" @click="cancelEdit">Cancel</v-btn>
-                </v-form>
-            </v-card-text>
-        </v-card>
-        <v-card title="Level" :subtitle="userStore.user.level.toString()"></v-card>
-        <v-card title="Status" :subtitle="userStore.user.status"></v-card>
+    <v-container>
+        <v-row justify="center">
+            <v-col cols="auto">
+                <v-avatar size="150" rounded="0">
+                    <img :src="getAvatar()" class="avatar" />
+                </v-avatar>
+            </v-col>
+        </v-row>
+        <v-row justify="center">
+            <v-col cols="4">
+                <v-file-input label="Upload file within 10MB" id="avatar" chips color="deep-purple-accent-4" counter
+                    :show-size=true density="compact" variant="underlined" v-model="uploaded">
+                </v-file-input>
+            </v-col>
+        </v-row>
+        <v-row justify="center">
+            <v-btn v-if="uploaded" color="primary" size="small" @click="updateAvatar">Change avatar</v-btn>
+        </v-row>
+        <v-row justify="center">
+            <v-col cols="6">
+                <v-card v-show="!nameEdit" title="Username" elevation="0">
+                    <template v-slot:subtitle>
+                        {{ userStore.user.username }}
+                    </template>
+                    <template v-slot:append>
+                        <v-btn variant="text" icon="mdi-chevron-left" @click.stop="nameEdit = !nameEdit">Edit</v-btn>
+                    </template>
+                </v-card>
+                <v-card v-show="nameEdit" elevation="0">
+                    <v-card-title>
+                        Please type your new username
+                    </v-card-title>
+                    <v-card-text>
+                        <v-form @submit.prevent="changeUsername">
+                            <v-text-field label="New username" v-model="tmpName" :rules="rules"
+                                @keydown.enter.prevent="changeUsername" density="compact"
+                                variant="underlined"></v-text-field>
+                            <v-row justify="center">
+                                <v-btn color="primary" type="submit" size="small">Save</v-btn>
+                                <v-btn color="warning" @click="cancelEdit" size="small">Cancel</v-btn>
+                            </v-row>
+                        </v-form>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+        <v-row justify="center">
+            <v-col cols="6">
+                <v-card title="Level" :subtitle="userStore.user.level.toString()" elevation="0"></v-card>
+            </v-col>
+        </v-row>
+        <v-row justify="center">
+            <v-col cols="6">
+                <v-card title="Status" :subtitle="userStore.user.status" elevation="0"></v-card>
+            </v-col>
+        </v-row>
 
-    </v-card>
+    </v-container>
 </template>
 <style>
 .avatar {
