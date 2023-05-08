@@ -17,7 +17,7 @@ export default defineComponent({
 			rooms: [],
 			gameStore: useGameStore(),
 			model: 1,
-			
+			URL: "http://localhost:3000/users/avatar/",
 		};
 	},
 
@@ -34,35 +34,39 @@ export default defineComponent({
 	},
 
 	methods: {
-		startMatch()
-		{
+		startMatch() {
 			// response is either 0 if no rooms entered, 1 if player 1, 2 if player 2
-			this.gameStore.socket.emit("createCustom", { 
+			this.gameStore.socket.emit("createCustom", {
 				mod: this.model,
 				invite_id: this.gameStore.invitedUser.id,
-			}, 
-			(response) => {
-				this.gameStore.inGame = response.player_side;
-				if (this.gameStore.inGame)
-					this.gameStore.currentRoom = response.roomName;
+			},
+				(response) => {
+					this.gameStore.inGame = response.player_side;
+					if (this.gameStore.inGame)
+						this.gameStore.currentRoom = response.roomName;
 					console.log(this.gameStore)
 					router.push('/game');
-			});
+				});
 		},
 
-		leaveRoom(roomName: string)
-		{
+		leaveRoom(roomName: string) {
 			this.gameStore.socket.emit("leaveRoom", { roomName });
 			this.gameStore.currentRoom = null;
 			this.gameStore.inGame = 0;
 			router.push({ path: '/chat' });
 		},
 
-		spectateRoom(roomName: string)
-		{
+		spectateRoom(roomName: string) {
 			this.gameStore.socket.emit("spectateRoom", { roomName });
 			this.gameStore.currentRoom = roomName;
 			this.gameStore.inGame = 3;
+		},
+
+		getAvatar(avatar: string): string {
+			if (avatar.startsWith("https://cdn.intra.42.fr/")) {
+				return avatar;
+			}
+			return this.URL + avatar;
 		},
 
 	},
@@ -76,14 +80,13 @@ export default defineComponent({
 </script>
 
 <template>
-
 	<v-card v-if="!this.gameStore.inGame" class="mx-auto ma-4" elevation="2" max-width="730">
 		<v-slide-group v-model="model" class="pa-4" selected-class="bg-primary" mandatory show-arrows>
 
 			<v-slide-group-item v-slot="{ isSelected, toggle, selectedClass }">
 				<v-card color="grey-lighten-1" :class="['ma-4', selectedClass]" height="200" width="200" @click="toggle">
 					<div class="d-flex fill-height align-center justify-center">
-						<v-img :src="gamemod0"/>
+						<v-img :src="gamemod0" />
 					</div>
 				</v-card>
 			</v-slide-group-item>
@@ -91,7 +94,7 @@ export default defineComponent({
 			<v-slide-group-item v-slot="{ isSelected, toggle, selectedClass }">
 				<v-card color="grey-lighten-1" :class="['ma-4', selectedClass]" height="200" width="200" @click="toggle">
 					<div class="d-flex fill-height align-center justify-center">
-						<v-img :src="gamemod1"/>
+						<v-img :src="gamemod1" />
 					</div>
 				</v-card>
 			</v-slide-group-item>
@@ -99,13 +102,13 @@ export default defineComponent({
 			<v-slide-group-item v-slot="{ isSelected, toggle, selectedClass }">
 				<v-card color="grey-lighten-1" :class="['ma-4', selectedClass]" height="200" width="200" @click="toggle">
 					<div class="d-flex fill-height align-center justify-center">
-						<v-img :src="gamemod2"/>
+						<v-img :src="gamemod2" />
 					</div>
 				</v-card>
 			</v-slide-group-item>
-			
-      	</v-slide-group>
-  
+
+		</v-slide-group>
+
 		<v-expand-transition>
 			<v-sheet v-if="model != null" height="100">
 				<div class="d-flex fill-height align-center justify-center">
@@ -124,29 +127,24 @@ export default defineComponent({
 				</div>
 			</v-sheet>
 		</v-expand-transition>
-		
-		<v-btn 
-			class="d-flex alight-center justify-center mx-auto ma-4"
-			color="primary"
-			v-if="!this.gameStore.inGame" v-on:click="startMatch()"
-			>Start Match</v-btn>
-		
-    </v-card>
+
+		<v-btn class="d-flex alight-center justify-center mx-auto ma-4" color="primary" v-if="!this.gameStore.inGame"
+			v-on:click="startMatch()">Start Match</v-btn>
+
+	</v-card>
 
 	<v-row justify="center">
 		<v-col cols="auto pa-8">
-			<v-btn
-				v-if="this.gameStore.inGame" v-on:click="leaveRoom(this.gameStore.currentRoom)"
-				>Leave</v-btn>
+			<v-btn v-if="this.gameStore.inGame" v-on:click="leaveRoom(this.gameStore.currentRoom)">Leave</v-btn>
 		</v-col>
 	</v-row>
 
 	<v-row justify="center">
 		<v-card>
-			<v-card-title class="d-flex justify-center" >Your opponent</v-card-title>
+			<v-card-title class="d-flex justify-center">Your opponent</v-card-title>
 			<v-col class="d-flex justify-center">
 				<v-avatar size="100">
-					<v-img v-bind:src="gameStore.invitedUser.avatar"></v-img>
+					<v-img v-bind:src="getAvatar(this.gameStore.invitedUser.avatar)"></v-img>
 				</v-avatar>
 			</v-col>
 			<v-col cols="auto" class="d-flex justify-center">
@@ -160,13 +158,10 @@ export default defineComponent({
 			</v-col>
 		</v-card>
 	</v-row>
-
 </template>
 
 <style>
-
 .opacity {
 	opacity: 0.5;
 }
-
 </style>
