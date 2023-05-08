@@ -65,12 +65,19 @@ export default defineComponent({
 
 
 		},
+
 		getAvatar(avatar: string): string {
 			if (avatar.startsWith("https://cdn.intra.42.fr/")) {
 				return avatar;
 			}
 			return this.URL + avatar;
 		},
+
+		getResult(history: any): string {
+			history.opponent = history.player1 == userStore.user.id ? history.player2 : history.player1;
+			let side = history.opponent == history.player1 ? 2 : 1;
+			return (history.winner == side ? 'win' : 'lose');
+		}
 	},
 
 	computed: {
@@ -109,7 +116,8 @@ export default defineComponent({
 							</v-col>
 
 							<v-col cols="3" class="column">
-								{{ this.history[index].winner == this.userStore.user.id ? "win" : "lose" }}
+								<!-- {{ this.history[index].winner == this.userStore.user.id ? "win" : "lose" }} -->
+								{{ this.getResult(this.history[index]) }}
 							</v-col>
 
 							<v-col cols="3" class="column">
