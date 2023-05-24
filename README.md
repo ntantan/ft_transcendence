@@ -16,7 +16,7 @@ A full stack website that runs an online multiplayer pong, a real-time chat and 
 
 ## Deployment
 
-To deploy this project run
+To deploy this project, setup an .env file and run
 
 ```bash
   make
