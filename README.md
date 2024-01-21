@@ -42,6 +42,8 @@ POSTGRES_HOST=database
 API_UID={42_api_uid}
 API_SECRET={42_api_secret}
 API_REDIRECT_URL=http://localhost:3000/auth/42-redirect
+
+JWT_SECRET=supersecuresecret
 ```
 
 ## Screenshots
